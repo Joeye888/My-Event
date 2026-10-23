@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Job History | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <style>
+      .history { max-width: 1000px; padding: 40px; }
+      .history h1 { margin: 0; color: var(--yellow); }
+      .history-intro { color: var(--muted); }
+      .history-list { display: grid; gap: 12px; margin-top: 24px; }
+      .history-card { display: flex; justify-content: space-between; gap: 20px; border: 1px solid #334155; border-radius: 14px; padding: 18px; background: #111827; }
+      .history-card h2 { margin: 0; color: #f8fafc; font-size: 1rem; }
+      .history-meta { margin-top: 7px; color: var(--muted); font-size: .84rem; }
+      .history-status { align-self: center; color: #86efac; font-weight: 700; white-space: nowrap; }
+      .history-status.cancelled { color: #fca5a5; }
+      .empty-history { margin-top: 24px; color: var(--muted); }
+      @media (max-width: 640px) { .history { padding: 28px 20px; } .history-card { flex-direction: column; gap: 10px; } .history-status { align-self: flex-start; } }
+    </style>
+  </head>
+  <body class="workspace-page">
+    <script>if (sessionStorage.getItem("eventKakiDemoLoggedIn") !== "true" || sessionStorage.getItem("eventKakiRole") !== "crew") window.location.replace("./login.html");</script>
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Crew workspace</div>
+        <nav class="workspace-nav">
+          <a href="./index.html">Overview</a>
+          <a href="./checkin.html">Check In/Out</a>
+          <a href="./jobs.html">Find Jobs</a>
+          <a class="active" href="./job-history.html">Job History</a>
+          <a href="./my-schedule.html">My Schedule</a>
+          <a href="./my-profile.html">My Profile</a>
+          <a href="./my-wallet.html">My Wallet</a>
+          <a href="./login.html" onclick="sessionStorage.clear()">Sign out</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline"><span>Workspace / Job History</span><span class="workspace-account" id="current-account"></span></div>
+        <main class="history">
+          <h1>Job History</h1>
+          <p class="history-intro">Review jobs you have applied for, including cancelled applications.</p>
+          <div class="history-list" id="history-list"></div>
+        </main>
+      </div>
+    </div>
+    <script>
+      const employeeId = sessionStorage.getItem("eventKakiEmployeeId");
+      const list = document.getElementById("history-list");
+      document.getElementById("current-account").textContent = `${employeeId} · EPF deducted`;
+
+      function normalizeStatus(status) {
+        const value = String(status || "").trim();
+        if (!value) return "Pending";
+        if (value === "Applied") return "Pending";
+        if (value === "Job cancelled") return "Cancelled";
+        return value;
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+        }[character]));
+      }
+
+      fetch("/api/job-applications", {
+        headers: { "X-Auth-Token": sessionStorage.getItem("eventKakiAuthToken") || "" }
+      }).then(async (response) => {
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.message || "Unable to load job history");
+        const applications = data.applications || [];
+        list.innerHTML = applications.length ? applications.map((application) => {
+          const status = normalizeStatus(application.status);
+          const displayStatus = application.cancellation_request_status === "Pending" ? "Cancellation pending review" : status;
+          const cancelled = ["Cancelled", "Expired", "Rejected", "Withdrawn"].includes(status);
+          return `<article class="history-card"><div><h2>${escapeHtml(application.job_title)}</h2><div class="history-meta">${escapeHtml(application.date || application.date_key)} · ${escapeHtml(application.location || "Event location")} · ${escapeHtml(application.section)} · ${escapeHtml(application.shift_time)}</div></div><strong class="history-status${cancelled ? " cancelled" : ""}">${escapeHtml(displayStatus)}</strong></article>`;
+        }).join("") : '<p class="empty-history">You have not applied for any jobs yet.</p>';
+      }).catch(error => {
+        list.innerHTML = `<p class="empty-history">${error.message}</p>`;
+      });
+    </script>
+  </body>
+</html>

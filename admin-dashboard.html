@@ -1,0 +1,1214 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Admin Dashboard | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <link rel="stylesheet" href="./admin-dashboard.css" />
+    <style>
+      .applications-panel {
+        margin-top: 28px;
+        border: 1px solid #2a3442;
+        border-radius: 18px;
+        padding: 24px;
+        background: #111827;
+      }
+      .application-list {
+        display: grid;
+        gap: 12px;
+        margin-top: 18px;
+      }
+      .application-item {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        border: 1px solid #2a3442;
+        border-radius: 12px;
+        padding: 16px;
+        background: #0f172a;
+      }
+      .application-item strong {
+        color: #f8fafc;
+      }
+      .application-meta {
+        color: #cbd5e1;
+        font-size: 0.85rem;
+        line-height: 1.6;
+      }
+      .application-actions {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .action-btn-small,
+      .approve-btn,
+      .reject-btn,
+      .details-btn {
+        border-radius: 8px;
+        padding: 8px 12px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .details-btn {
+        border: 1px solid #475569;
+        color: #e2e8f0;
+        background: transparent;
+      }
+      .approve-btn {
+        border: 1px solid #22c55e;
+        color: #052e16;
+        background: #86efac;
+      }
+      .reject-btn {
+        border: 1px solid #ef4444;
+        color: #fee2e2;
+        background: #7f1d1d;
+      }
+      .empty-state {
+        border: 1px dashed #475569;
+        border-radius: 10px;
+        padding: 18px;
+        color: #cbd5e1;
+        text-align: center;
+      }
+      .history-filters {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        margin: 16px 0;
+      }
+      .history-filters input,
+      .history-filters select,
+      .history-status-select {
+        min-width: 150px;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        padding: 9px 10px;
+        color: #f8fafc;
+        background: #0f172a;
+      }
+      .history-action {
+        border: 1px solid #475569;
+        border-radius: 7px;
+        padding: 6px 9px;
+        color: #e2e8f0;
+        background: #1e293b;
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .history-action.danger { border-color: #ef4444; color: #fecaca; }
+      #event-edit-modal .modal-content { max-height: 90vh; overflow-y: auto; }
+    </style>
+  </head>
+  <body class="workspace-page">
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Administration</div>
+        <nav class="workspace-nav">
+          <a href="./admin-dashboard.html" class="nav-item active">Dashboard</a>
+          <a href="./post-job.html" class="nav-item">Post Job</a>
+          <a href="./login.html" class="nav-item" onclick="logoutSupervisor(event)">Logout</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline">
+          <span>Workspace / Crew Management</span>
+          <span class="workspace-account">Supervisor · S000001</span>
+        </div>
+        <main class="admin-container">
+          <div class="dashboard-header">
+            <h1>Employee Time Tracking Dashboard</h1>
+            <div class="header-controls">
+              <input type="date" id="admin-date" />
+              <button class="export-btn" onclick="exportToCSV()">Export CSV</button>
+            </div>
+          </div>
+
+          <div class="overview-grid">
+            <div class="overview-card">
+              <div class="card-label">Total Employees</div>
+              <div class="card-value" id="total-employees">0</div>
+            </div>
+            <div class="overview-card">
+              <div class="card-label">Checked In Today</div>
+              <div class="card-value" id="checked-in-today">0</div>
+            </div>
+            <div class="overview-card">
+              <div class="card-label">Checked Out</div>
+              <div class="card-value" id="checked-out-today">0</div>
+            </div>
+            <div class="overview-card">
+              <div class="card-label">Total Hours Today</div>
+              <div class="card-value" id="total-hours-today">0h</div>
+            </div>
+          </div>
+
+          <div class="dashboard-content">
+            <div class="employee-list-section">
+              <h2>Today's Attendance</h2>
+              <div class="search-box">
+                <input type="text" id="search-employee" placeholder="Search by employee name or ID..." onkeyup="filterEmployees()" />
+              </div>
+
+              <div class="table-container">
+                <table class="admin-table">
+                  <thead>
+                    <tr>
+                      <th>Employee ID</th>
+                      <th>Name</th>
+                      <th>Position</th>
+                      <th>Check In</th>
+                      <th>Check Out</th>
+                      <th>Hours Worked</th>
+                      <th>Status</th>
+                    </tr>
+                  </thead>
+                  <tbody id="admin-tbody">
+                    <tr class="empty-row">
+                      <td colspan="7" class="empty-message">Loading attendance records...</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="sidebar-section">
+              <div class="quick-actions">
+                <h3>Quick Actions</h3>
+                <button class="action-btn" onclick="refreshData()">🔄 Refresh Data</button>
+                <button class="action-btn" onclick="openFilterModal()">🔍 Advanced Filter</button>
+                <button class="action-btn" onclick="downloadReport()">📥 Download Report</button>
+              </div>
+
+              <div class="alerts-box">
+                <h3>Alerts</h3>
+                <div id="alerts-list" class="alerts-list">
+                  <p class="no-alerts">No alerts</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <section class="applications-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Pending Crew Applications</h2>
+                <p>Review each application, check Crew details, and approve or reject before the shift starts.</p>
+              </div>
+            </div>
+            <div id="applications-list" class="application-list">
+              <div class="empty-state">Loading job applications...</div>
+            </div>
+          </section>
+
+          <section class="applications-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Event History</h2>
+                <p>Past, ongoing and upcoming events remain available here, including cancelled listings.</p>
+              </div>
+            </div>
+            <div class="history-filters">
+              <input id="event-history-search" type="search" placeholder="Search event or venue" />
+              <select id="event-history-status">
+                <option value="">All event statuses</option>
+                <option>Open</option><option>Job Full</option><option>Ongoing</option>
+                <option>Completed</option><option>Cancelled</option><option>Expired</option>
+              </select>
+            </div>
+            <div class="table-container">
+              <table class="admin-table">
+                <thead><tr><th>Event</th><th>Date & time</th><th>Venue</th><th>Salary</th><th>Crew needed</th><th>Applied</th><th>Assigned</th><th>Status</th><th>Actions</th></tr></thead>
+                <tbody id="event-history-body"><tr><td colspan="9">Loading events...</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="applications-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Application History</h2>
+                <p>Filter all Crew applications and update Pending, Approved, Rejected or Withdrawn status.</p>
+              </div>
+            </div>
+            <div class="history-filters">
+              <select id="application-event-filter"><option value="">All events</option></select>
+              <input id="application-crew-filter" type="search" placeholder="Crew name, ID or contact" />
+              <input id="application-date-filter" type="date" aria-label="Application date" />
+              <select id="application-status-filter">
+                <option value="">All application statuses</option>
+                <option>Pending</option><option>Approved</option><option>Rejected</option><option>Withdrawn</option><option>Cancelled</option>
+              </select>
+            </div>
+            <div class="table-container">
+              <table class="admin-table">
+                <thead><tr><th>Crew / contact</th><th>Event</th><th>Applied</th><th>Status</th><th>Update</th><th>Crew history</th></tr></thead>
+                <tbody id="application-history-body"><tr><td colspan="6">Loading applications...</td></tr></tbody>
+              </table>
+            </div>
+          </section>
+
+          <section class="applications-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Late Cancellation Evidence</h2>
+                <p>Review evidence for cancellations requested within 3 hours of a shift. Accepting evidence has no freeze; rejecting it applies a 24-hour booking freeze.</p>
+              </div>
+            </div>
+            <div id="cancellation-requests-list" class="application-list">Loading cancellation requests...</div>
+          </section>
+
+          <section class="applications-panel">
+            <div class="section-heading">
+              <div>
+                <h2>Pending Profile Change Requests</h2>
+                <p>Review requested Crew information updates before applying them to the account.</p>
+              </div>
+            </div>
+            <div id="profile-requests-list" class="application-list">
+              <div class="empty-state">Loading profile change requests...</div>
+            </div>
+          </section>
+
+          <section class="employee-management">
+            <div class="section-heading">
+              <div>
+                <h2>Crew Information</h2>
+                <p>View and update every crew member's registered information.</p>
+              </div>
+            </div>
+            <div class="table-container">
+              <table class="admin-table">
+                <thead>
+                  <tr>
+                    <th>Employee ID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Phone</th>
+                    <th>Document</th>
+                    <th>Address</th>
+                    <th>Gender</th>
+                    <th>Position</th>
+                    <th>Department</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody id="employees-tbody">
+                  <tr class="empty-row"><td colspan="10" class="empty-message">Loading crew information...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+        </main>
+      </div>
+
+      <div id="employee-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Edit Crew Information</h2>
+            <button class="modal-close" onclick="closeEmployeeModal()">×</button>
+          </div>
+          <form id="employee-form">
+            <div class="modal-body employee-form">
+              <input type="hidden" id="employee-id" />
+              <label>Name <input id="employee-name" required /></label>
+              <label>Email <input id="employee-email" type="email" /></label>
+              <label>Phone <input id="employee-phone" /></label>
+              <label>Position <input id="employee-position" /></label>
+              <label>Department <input id="employee-department" /></label>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" type="button" onclick="closeEmployeeModal()">Cancel</button>
+              <button class="modal-btn apply" type="submit">Save Changes</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <div id="application-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Crew Application Details</h2>
+            <button class="modal-close" onclick="closeApplicationModal()">×</button>
+          </div>
+
+          <div id="profile-request-modal" class="modal" style="display: none;">
+            <div class="modal-content">
+              <div class="modal-header">
+                <h2>Profile Change Request Details</h2>
+                <button class="modal-close" type="button" onclick="closeProfileRequestModal()">×</button>
+              </div>
+              <div class="modal-body" id="profile-request-details"></div>
+              <div class="modal-footer">
+                <button class="modal-btn cancel" type="button" onclick="closeProfileRequestModal()">Close</button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-body" id="application-details-content"></div>
+          <div class="modal-footer">
+            <button class="modal-btn cancel" type="button" onclick="closeApplicationModal()">Close</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Filter Modal -->
+    <div id="filter-modal" class="modal" style="display: none;">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h2>Advanced Filter</h2>
+          <button class="modal-close" onclick="closeFilterModal()">×</button>
+        </div>
+        <div class="modal-body">
+          <label>Start Date:</label>
+          <input type="date" id="filter-start-date" />
+          
+          <label>End Date:</label>
+          <input type="date" id="filter-end-date" />
+          
+          <label>Department:</label>
+          <select id="filter-department">
+            <option value="">All Departments</option>
+            <option value="Operations">Operations</option>
+            <option value="Management">Management</option>
+            <option value="Marketing">Marketing</option>
+          </select>
+        </div>
+        <div class="modal-footer">
+          <button class="modal-btn cancel" onclick="closeFilterModal()">Cancel</button>
+          <button class="modal-btn apply" onclick="applyAdvancedFilter()">Apply</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="event-edit-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h2>Edit Event</h2>
+            <button class="modal-close" type="button" id="close-event-edit">×</button>
+          </div>
+          <form id="event-edit-form">
+            <div class="modal-body employee-form">
+              <input type="hidden" id="event-edit-id" />
+              <label>Event name <input id="event-edit-title" required /></label>
+              <label>Date <input id="event-edit-date" type="date" required /></label>
+              <label>Venue <input id="event-edit-location" required /></label>
+              <label>Job type <input id="event-edit-type" /></label>
+              <label>Call time <input id="event-edit-call" type="time" /></label>
+              <label>End time <input id="event-edit-end" type="time" /></label>
+              <label>Salary (RM) <input id="event-edit-wage" type="number" min="0" step="0.01" /></label>
+              <label>Crew required <input id="event-edit-pax" type="number" min="1" step="1" required /></label>
+              <label>Dress code <input id="event-edit-dress" /></label>
+              <label>Food provided
+                <select id="event-edit-food"><option value="false">No</option><option value="true">Yes</option></select>
+              </label>
+              <label>Notes <textarea id="event-edit-notes"></textarea></label>
+            </div>
+            <div class="modal-footer">
+              <button class="modal-btn cancel" type="button" id="cancel-event-edit">Cancel</button>
+              <button class="modal-btn apply" type="submit">Save event</button>
+            </div>
+          </form>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = 'http://localhost:3000/api';
+      let allAttendanceData = [];
+      let allEmployees = [];
+      let filteredAttendanceData = [];
+      let pendingApplications = [];
+      let profileChangeRequests = [];
+      let eventHistoryJobs = [];
+      let applicationHistoryRows = [];
+      let cancellationRequests = [];
+      const malaysiaDate = () => new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      const supervisorHeaders = () => ({
+        'X-Auth-Token': sessionStorage.getItem('eventKakiAuthToken') || ''
+      });
+
+      async function logoutSupervisor(event) {
+        event.preventDefault();
+        await fetch(`${API_BASE}/auth/logout`, {
+          method: 'POST',
+          headers: supervisorHeaders()
+        }).catch(error => console.error('Logout failed:', error));
+        sessionStorage.clear();
+        window.location.href = './login.html';
+      }
+
+      function normalizeApplicationStatus(status) {
+        const value = String(status || '').trim();
+        if (!value) return 'Pending';
+        if (value === 'Applied') return 'Pending';
+        if (value === 'Job cancelled') return 'Cancelled';
+        return value;
+      }
+
+      function renderApprovalQueue() {
+        const list = document.getElementById('applications-list');
+        if (!pendingApplications.length) {
+          list.innerHTML = '<div class="empty-state">No pending crew applications.</div>';
+          return;
+        }
+
+        list.innerHTML = pendingApplications.map((application) => `
+          <div class="application-item">
+            <div>
+              <strong>${escapeHtml(application.job_title || 'Job')}</strong>
+              <div class="application-meta">
+                Crew: ${escapeHtml(application.crew_name || application.employee_id || 'Unknown')}<br />
+                ${escapeHtml(application.date || application.date_key || '')} · ${escapeHtml(application.location || 'Event location')}<br />
+                ${escapeHtml(application.section || 'General')} · ${escapeHtml(application.shift_time || 'Time TBD')}<br />
+                Contact: ${escapeHtml(application.crew_phone || 'N/A')} · ${escapeHtml(application.crew_email || 'N/A')}
+              </div>
+            </div>
+            <div class="application-actions">
+              <button type="button" class="details-btn" data-application-id="${application.id}">Details</button>
+              <button type="button" class="approve-btn" data-application-id="${application.id}">Approve</button>
+              <button type="button" class="reject-btn" data-application-id="${application.id}">Reject</button>
+            </div>
+          </div>
+        `).join('');
+
+        list.querySelectorAll('.details-btn').forEach(button => {
+          button.addEventListener('click', () => openApplicationModal(button.dataset.applicationId));
+        });
+
+        list.querySelectorAll('.approve-btn').forEach(button => {
+          button.addEventListener('click', () => updateApplicationStatus(button.dataset.applicationId, 'approve'));
+        });
+
+        list.querySelectorAll('.reject-btn').forEach(button => {
+          button.addEventListener('click', () => updateApplicationStatus(button.dataset.applicationId, 'reject'));
+        });
+      }
+
+      async function loadApprovalQueue() {
+        try {
+          const response = await fetch(`${API_BASE}/job-applications`, { headers: supervisorHeaders() });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'Unable to load job applications');
+          pendingApplications = (data.applications || []).filter((application) => {
+            const status = normalizeApplicationStatus(application.status);
+            return ['Pending', 'Applied'].includes(status);
+          });
+          renderApprovalQueue();
+        } catch (error) {
+          document.getElementById('applications-list').innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+        }
+      }
+
+      function openApplicationModal(applicationId) {
+        const application = pendingApplications.find(item => String(item.id) === String(applicationId));
+        if (!application) return;
+        const content = document.getElementById('application-details-content');
+        content.innerHTML = `
+          <div class="application-meta">
+            <strong>Job:</strong> ${escapeHtml(application.job_title || 'Unknown')}<br />
+            <strong>Date:</strong> ${escapeHtml(application.date || application.date_key || 'N/A')}<br />
+            <strong>Location:</strong> ${escapeHtml(application.location || 'N/A')}<br />
+            <strong>Shift:</strong> ${escapeHtml(application.section || 'General')} · ${escapeHtml(application.shift_time || 'Time TBD')}<br />
+            <strong>Crew Name:</strong> ${escapeHtml(application.crew_name || application.employee_id || 'Unknown')}<br />
+            <strong>Email:</strong> ${escapeHtml(application.crew_email || 'N/A')}<br />
+            <strong>Phone:</strong> ${escapeHtml(application.crew_phone || 'N/A')}<br />
+            <strong>Position:</strong> ${escapeHtml(application.crew_position || 'N/A')}<br />
+            <strong>Department:</strong> ${escapeHtml(application.crew_department || 'N/A')}<br />
+            <strong>Submitted:</strong> ${escapeHtml(application.created_at || 'N/A')}
+          </div>
+        `;
+        document.getElementById('application-modal').style.display = 'flex';
+      }
+
+      function closeApplicationModal() {
+        document.getElementById('application-modal').style.display = 'none';
+      }
+
+      async function updateApplicationStatus(applicationId, action) {
+        const path = action === 'approve'
+          ? `${API_BASE}/job-applications/${encodeURIComponent(applicationId)}/approve`
+          : `${API_BASE}/job-applications/${encodeURIComponent(applicationId)}/reject`;
+
+        try {
+          const response = await fetch(path, {
+            method: 'POST',
+            headers: { ...supervisorHeaders(), 'Content-Type': 'application/json' }
+          });
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || `Unable to ${action} this application`);
+          }
+          await loadApprovalQueue();
+          await Promise.all([loadDashboardData(), loadEventHistory(), loadApplicationHistory()]);
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+
+      async function loadProfileChangeRequests() {
+        const list = document.getElementById('profile-requests-list');
+        try {
+          const response = await fetch(`${API_BASE}/profile/change-requests`, { headers: supervisorHeaders() });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'Unable to load profile change requests');
+          profileChangeRequests = data.requests || [];
+          const pending = profileChangeRequests.filter(request => request.status === 'Pending');
+          if (!pending.length) {
+            list.innerHTML = '<div class="empty-state">No pending profile change requests.</div>';
+            return;
+          }
+          list.innerHTML = pending.map(request => {
+            const proposed = request.proposed_profile || {};
+            return `
+              <div class="application-item">
+                <div>
+                  <strong>${escapeHtml(request.crew_name || request.employee_id)} · ${escapeHtml(request.employee_id)}</strong>
+                  <div class="application-meta">
+                    Requested ${escapeHtml(request.created_at || 'recently')}<br />
+                    ${escapeHtml(request.crew_email || '')} → ${escapeHtml(proposed.email || '')}
+                  </div>
+                </div>
+                <div class="application-actions">
+                  <button type="button" class="details-btn profile-request-details" data-request-id="${escapeHtml(request.id)}">Details</button>
+                  <button type="button" class="approve-btn profile-request-decision" data-request-id="${escapeHtml(request.id)}" data-decision="approve">Approve</button>
+                  <button type="button" class="reject-btn profile-request-decision" data-request-id="${escapeHtml(request.id)}" data-decision="reject">Reject</button>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+          list.querySelectorAll('.profile-request-details').forEach(button => {
+            button.addEventListener('click', () => openProfileRequestModal(button.dataset.requestId));
+          });
+          list.querySelectorAll('.profile-request-decision').forEach(button => {
+            button.addEventListener('click', () => reviewProfileChangeRequest(button.dataset.requestId, button.dataset.decision));
+          });
+        } catch (error) {
+          list.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+        }
+      }
+
+      function openProfileRequestModal(requestId) {
+        const request = profileChangeRequests.find(item => String(item.id) === String(requestId));
+        if (!request) return;
+        const proposed = request.proposed_profile || {};
+        const crew = allEmployees.find(item => item.id === request.employee_id) || {};
+        const rows = [
+          ['Name', crew.name, proposed.name],
+          ['Document type', crew.document_type, proposed.document_type],
+          ['Document number', crew.document_number, proposed.document_number],
+          ['Email', crew.email, proposed.email],
+          ['Phone', crew.phone, proposed.phone],
+          ['Current address', crew.current_address, proposed.current_address],
+          ['Gender', crew.gender, proposed.gender]
+        ];
+        document.getElementById('profile-request-details').innerHTML = `
+          <p><strong>Crew:</strong> ${escapeHtml(request.crew_name || request.employee_id)} (${escapeHtml(request.employee_id)})</p>
+          <p><strong>Submitted:</strong> ${escapeHtml(request.created_at || 'N/A')}</p>
+          <div class="application-meta">${rows.map(([label, oldValue, newValue]) =>
+            `<p><strong>${escapeHtml(label)}:</strong> ${escapeHtml(oldValue || '—')} → <strong>${escapeHtml(newValue || '—')}</strong></p>`
+          ).join('')}</div>
+        `;
+        document.getElementById('profile-request-modal').style.display = 'flex';
+      }
+
+      function closeProfileRequestModal() {
+        document.getElementById('profile-request-modal').style.display = 'none';
+      }
+
+      async function reviewProfileChangeRequest(requestId, decision) {
+        try {
+          const response = await fetch(`${API_BASE}/profile/change-requests/${encodeURIComponent(requestId)}/${decision}`, {
+            method: 'PATCH',
+            headers: supervisorHeaders()
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'Unable to review profile change request');
+          closeProfileRequestModal();
+          await Promise.all([loadProfileChangeRequests(), loadDashboardData()]);
+        } catch (error) {
+          alert(error.message);
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        if (sessionStorage.getItem('eventKakiRole') !== 'supervisor') {
+          window.location.replace('./login.html');
+          return;
+        }
+        const today = malaysiaDate();
+        document.getElementById('admin-date').value = today;
+        loadDashboardData();
+        loadApprovalQueue();
+        loadProfileChangeRequests();
+        loadEventHistory().then(loadApplicationHistory);
+        loadCancellationRequests();
+        ['event-history-search', 'event-history-status'].forEach(id =>
+          document.getElementById(id).addEventListener(id.endsWith('search') ? 'input' : 'change', renderEventHistory));
+        ['application-event-filter', 'application-crew-filter', 'application-date-filter', 'application-status-filter'].forEach(id =>
+          document.getElementById(id).addEventListener(id.includes('filter') ? (id.includes('crew') ? 'input' : 'change') : 'change', renderApplicationHistory));
+        const closeEventEdit = () => { document.getElementById('event-edit-modal').style.display = 'none'; };
+        document.getElementById('close-event-edit').addEventListener('click', closeEventEdit);
+        document.getElementById('cancel-event-edit').addEventListener('click', closeEventEdit);
+        document.getElementById('event-edit-form').addEventListener('submit', async event => {
+          event.preventDefault();
+          const jobId = document.getElementById('event-edit-id').value;
+          const date = document.getElementById('event-edit-date').value;
+          const body = {
+            title: document.getElementById('event-edit-title').value,
+            date,
+            dateKey: date,
+            location: document.getElementById('event-edit-location').value,
+            jobType: document.getElementById('event-edit-type').value,
+            callTime: document.getElementById('event-edit-call').value,
+            endTime: document.getElementById('event-edit-end').value,
+            wage: document.getElementById('event-edit-wage').value,
+            pax: document.getElementById('event-edit-pax').value,
+            dressCode: document.getElementById('event-edit-dress').value,
+            foodProvided: document.getElementById('event-edit-food').value === 'true',
+            notes: document.getElementById('event-edit-notes').value
+          };
+          try {
+            const response = await fetch(`${API_BASE}/jobs/${encodeURIComponent(jobId)}`, {
+              method: 'PATCH',
+              headers: { ...supervisorHeaders(), 'Content-Type': 'application/json' },
+              body: JSON.stringify(body)
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to update event');
+            closeEventEdit();
+            await Promise.all([loadEventHistory(), loadApplicationHistory()]);
+          } catch (error) { alert(error.message); }
+        });
+        setInterval(() => {
+          loadDashboardData();
+          loadApprovalQueue();
+          loadProfileChangeRequests();
+          loadEventHistory().then(loadApplicationHistory);
+          loadCancellationRequests();
+        }, 60000); // Refresh every minute
+      });
+
+      async function loadDashboardData() {
+        try {
+          // Load all employees
+          const employeeResponse = await fetch(`${API_BASE}/employees`, { headers: supervisorHeaders() });
+          const employeeData = await employeeResponse.json();
+          allEmployees = employeeData.employees || [];
+          document.getElementById('total-employees').textContent = allEmployees.length;
+          displayEmployees();
+
+          // Load attendance for selected date
+          const selectedDate = document.getElementById('admin-date').value || malaysiaDate();
+          const attendanceResponse = await fetch(`${API_BASE}/admin/attendance?date=${selectedDate}`, { headers: supervisorHeaders() });
+          const attendanceData = await attendanceResponse.json();
+          
+          allAttendanceData = attendanceData.records || [];
+          filteredAttendanceData = allAttendanceData;
+
+          // Update statistics
+          const stats = attendanceData.statistics || {};
+          document.getElementById('checked-in-today').textContent = stats.checkedIn || 0;
+          document.getElementById('checked-out-today').textContent = stats.checkedOut || 0;
+          document.getElementById('total-hours-today').textContent = `${stats.totalHours || 0}h`;
+
+          displayAttendanceTable();
+          generateAlerts();
+        } catch (error) {
+          console.error('Error loading dashboard data:', error);
+          document.getElementById('admin-tbody').innerHTML = 
+            '<tr class="empty-row"><td colspan="7" class="empty-message">Error loading data</td></tr>';
+        }
+      }
+
+        function displayEmployees() {
+          const tbody = document.getElementById('employees-tbody');
+          if (!allEmployees.length) {
+            tbody.innerHTML = '<tr class="empty-row"><td colspan="10" class="empty-message">No crew information found</td></tr>';
+            return;
+          }
+          tbody.innerHTML = allEmployees.map(employee => {
+            const protectedDemo = ['N000001', 'S000001'].includes(employee.id);
+            return `
+              <tr>
+                <td>${escapeHtml(employee.id)}</td>
+                <td>${escapeHtml(employee.name || '-')}</td>
+                <td>${escapeHtml(employee.email || '-')}</td>
+                <td>${escapeHtml(employee.phone || '-')}</td>
+                <td>${escapeHtml([employee.document_type, employee.document_number].filter(Boolean).join(' · ') || '-')}</td>
+                <td>${escapeHtml(employee.current_address || '-')}</td>
+                <td>${escapeHtml(employee.gender || '-')}</td>
+                <td>${escapeHtml(employee.position || '-')}</td>
+                <td>${escapeHtml(employee.department || '-')}</td>
+                <td><button class="edit-employee-btn" onclick="openEmployeeModal('${escapeHtml(employee.id)}')">Edit</button>
+                  <button class="edit-employee-btn delete-employee-btn" onclick="deleteCrewAccount('${escapeHtml(employee.id)}')" ${protectedDemo ? 'disabled title="Built-in demo accounts cannot be deleted"' : ''}>Delete</button></td>
+              </tr>
+            `;
+          }).join('');
+        }
+
+        function escapeHtml(value) {
+          return String(value).replace(/[&<>"']/g, character => ({
+            '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;'
+          }[character]));
+        }
+
+        async function loadEventHistory() {
+          const body = document.getElementById('event-history-body');
+          try {
+            const response = await fetch(`${API_BASE}/jobs`, { headers: supervisorHeaders() });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to load event history');
+            eventHistoryJobs = data.jobs || [];
+            renderEventHistory();
+          } catch (error) {
+            body.innerHTML = `<tr><td colspan="9">${escapeHtml(error.message)}</td></tr>`;
+          }
+        }
+
+        function renderEventHistory() {
+          const body = document.getElementById('event-history-body');
+          const query = document.getElementById('event-history-search').value.trim().toLowerCase();
+          const status = document.getElementById('event-history-status').value;
+          const jobs = eventHistoryJobs.filter(job => {
+            const matchesText = `${job.title || ''} ${job.location || ''}`.toLowerCase().includes(query);
+            return matchesText && (!status || (job.displayStatus || job.status) === status);
+          });
+          body.innerHTML = jobs.length ? jobs.map(job => {
+            const currentStatus = job.displayStatus || job.status || 'Open';
+            const canCancel = ['Open', 'Job Full'].includes(currentStatus);
+            return `<tr>
+              <td>${escapeHtml(job.title || 'Event')}</td>
+              <td>${escapeHtml(job.date || job.dateKey || '')}<br />${escapeHtml(job.callTime || '—')}–${escapeHtml(job.endTime || '—')}</td>
+              <td>${escapeHtml(job.location || '—')}</td>
+              <td>${job.wage == null ? '—' : `RM ${Number(job.wage).toFixed(2)}`}</td>
+              <td>${Number(job.pax || 0)}</td>
+              <td>${Number(job.applicationsCount || 0)}</td>
+              <td>${Number(job.assignedCrewCount || 0)} / ${Number(job.pax || 0)}</td>
+              <td>${escapeHtml(currentStatus)}</td>
+              <td>
+                <button type="button" class="history-action event-edit" data-event-id="${escapeHtml(job.id)}">Edit</button>
+                <button type="button" class="history-action danger event-cancel" data-event-id="${escapeHtml(job.id)}" ${canCancel ? '' : 'disabled'}>Delete</button>
+              </td>
+            </tr>`;
+          }).join('') : '<tr><td colspan="9">No events match these filters.</td></tr>';
+          body.querySelectorAll('.event-edit').forEach(button => button.addEventListener('click', () => openEventEdit(button.dataset.eventId)));
+          body.querySelectorAll('.event-cancel').forEach(button => button.addEventListener('click', () => cancelEventListing(button.dataset.eventId)));
+        }
+
+        async function loadApplicationHistory() {
+          const body = document.getElementById('application-history-body');
+          try {
+            const response = await fetch(`${API_BASE}/job-applications`, { headers: supervisorHeaders() });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to load application history');
+            applicationHistoryRows = data.applications || [];
+            const eventFilter = document.getElementById('application-event-filter');
+            const selectedEvent = eventFilter.value;
+            eventFilter.innerHTML = '<option value="">All events</option>' + eventHistoryJobs.map(job =>
+              `<option value="${escapeHtml(job.id)}">${escapeHtml(job.title)} · ${escapeHtml(job.date || job.dateKey || '')}</option>`
+            ).join('');
+            eventFilter.value = selectedEvent;
+            renderApplicationHistory();
+          } catch (error) {
+            body.innerHTML = `<tr><td colspan="6">${escapeHtml(error.message)}</td></tr>`;
+          }
+        }
+
+        function renderApplicationHistory() {
+          const body = document.getElementById('application-history-body');
+          const eventId = document.getElementById('application-event-filter').value;
+          const crewQuery = document.getElementById('application-crew-filter').value.trim().toLowerCase();
+          const date = document.getElementById('application-date-filter').value;
+          const status = document.getElementById('application-status-filter').value;
+          const filtered = applicationHistoryRows.filter(application => {
+            const crewText = `${application.crew_name || ''} ${application.employee_id || ''} ${application.crew_email || ''} ${application.crew_phone || ''}`.toLowerCase();
+            const appliedDate = String(application.created_at || '').slice(0, 10);
+            const normalizedStatus = normalizeApplicationStatus(application.status);
+            return (!eventId || String(application.job_id) === eventId)
+              && (!crewQuery || crewText.includes(crewQuery))
+              && (!date || appliedDate === date)
+              && (!status || normalizedStatus === status);
+          });
+          body.innerHTML = filtered.length ? filtered.map(application => {
+            const normalizedStatus = normalizeApplicationStatus(application.status);
+            const visibleStatus = application.cancellation_request_status === 'Pending'
+              ? 'Cancellation pending review'
+              : normalizedStatus;
+            const statusOptions = ['Pending', 'Approved', 'Rejected', 'Withdrawn'];
+            if (!statusOptions.includes(normalizedStatus)) statusOptions.push(normalizedStatus);
+            return `
+            <tr>
+              <td>${escapeHtml(application.crew_name || application.employee_id)} · ${escapeHtml(application.employee_id)}<br />${escapeHtml(application.crew_phone || '—')} · ${escapeHtml(application.crew_email || '—')}</td>
+              <td>${escapeHtml(application.job_title || 'Event')}<br />${escapeHtml(application.date || application.date_key || '')} · ${escapeHtml(application.location || '')}</td>
+              <td>${escapeHtml(application.created_at || '')}</td>
+              <td>${escapeHtml(visibleStatus)}</td>
+              <td>
+                <select class="history-status-select" data-app-status="${escapeHtml(application.id)}">
+                  ${statusOptions.map(value => `<option ${value === normalizedStatus ? 'selected' : ''}>${escapeHtml(value)}</option>`).join('')}
+                </select>
+                <button type="button" class="history-action application-status-save" data-app-id="${escapeHtml(application.id)}">Update</button>
+              </td>
+              <td><button type="button" class="history-action crew-history" data-crew-id="${escapeHtml(application.employee_id)}">Crew history</button></td>
+            </tr>
+          `;
+          }).join('') : '<tr><td colspan="6">No applications match these filters.</td></tr>';
+          body.querySelectorAll('.application-status-save').forEach(button => button.addEventListener('click', () => {
+            const select = body.querySelector(`[data-app-status="${CSS.escape(button.dataset.appId)}"]`);
+            updateApplicationHistoryStatus(button.dataset.appId, select.value);
+          }));
+          body.querySelectorAll('.crew-history').forEach(button => button.addEventListener('click', () => {
+            document.getElementById('application-crew-filter').value = button.dataset.crewId;
+            renderApplicationHistory();
+          }));
+        }
+
+        function openEventEdit(eventId) {
+          const job = eventHistoryJobs.find(item => String(item.id) === String(eventId));
+          if (!job) return;
+          document.getElementById('event-edit-id').value = job.id;
+          document.getElementById('event-edit-title').value = job.title || '';
+          document.getElementById('event-edit-date').value = String(job.dateKey || '').slice(0, 10);
+          document.getElementById('event-edit-location').value = job.location || '';
+          document.getElementById('event-edit-type').value = job.jobType || '';
+          document.getElementById('event-edit-call').value = job.callTime || '';
+          document.getElementById('event-edit-end').value = job.endTime || '';
+          document.getElementById('event-edit-wage').value = job.wage == null ? '' : job.wage;
+          document.getElementById('event-edit-pax').value = job.pax || '';
+          document.getElementById('event-edit-dress').value = job.dressCode || '';
+          document.getElementById('event-edit-food').value = String(Boolean(job.foodProvided));
+          document.getElementById('event-edit-notes').value = job.notes || '';
+          document.getElementById('event-edit-modal').style.display = 'flex';
+        }
+
+        async function cancelEventListing(eventId) {
+          const job = eventHistoryJobs.find(item => String(item.id) === String(eventId));
+          if (!job || !window.confirm(`Cancel "${job.title}"? The event and its applications will remain in history.`)) return;
+          try {
+            const response = await fetch(`${API_BASE}/jobs/${encodeURIComponent(eventId)}`, {
+              method: 'DELETE', headers: supervisorHeaders()
+            });
+            const data = response.status === 204 ? {} : await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to cancel event');
+            await Promise.all([loadEventHistory(), loadApplicationHistory()]);
+          } catch (error) { alert(error.message); }
+        }
+
+        async function updateApplicationHistoryStatus(applicationId, status) {
+          try {
+            const response = await fetch(`${API_BASE}/job-applications/${encodeURIComponent(applicationId)}/status`, {
+              method: 'PATCH',
+              headers: { ...supervisorHeaders(), 'Content-Type': 'application/json' },
+              body: JSON.stringify({ status })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to update application');
+            await Promise.all([loadApplicationHistory(), loadEventHistory(), loadApprovalQueue()]);
+          } catch (error) { alert(error.message); }
+        }
+
+        async function loadCancellationRequests() {
+          const list = document.getElementById('cancellation-requests-list');
+          try {
+            const response = await fetch(`${API_BASE}/admin/cancellation-requests`, { headers: supervisorHeaders() });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to load cancellation evidence');
+            cancellationRequests = data.requests || [];
+            list.innerHTML = cancellationRequests.length ? cancellationRequests.map(request => `
+              <div class="application-item">
+                <div>
+                  <strong>${escapeHtml(request.crew_name)} · ${escapeHtml(request.employee_id)} — ${escapeHtml(request.job_title)}</strong>
+                  <div class="application-meta">${escapeHtml(request.date || request.date_key || '')} · ${escapeHtml(request.shift_time || '')}<br />
+                    ${escapeHtml(request.crew_phone || '—')} · ${escapeHtml(request.crew_email || '—')}<br />
+                    Reason: ${escapeHtml(request.reason)}<br />Evidence: ${escapeHtml(request.evidence_name)} · ${escapeHtml(request.status)}
+                  </div>
+                </div>
+                <div class="application-actions">
+                  <button type="button" class="details-btn evidence-open" data-request-id="${escapeHtml(request.id)}">View evidence</button>
+                  ${request.status === 'Pending' ? `<button type="button" class="approve-btn cancellation-decision" data-request-id="${escapeHtml(request.id)}" data-decision="approve">Accept evidence</button><button type="button" class="reject-btn cancellation-decision" data-request-id="${escapeHtml(request.id)}" data-decision="reject">Reject evidence</button>` : ''}
+                </div>
+              </div>
+            `).join('') : '<div class="empty-state">No late-cancellation evidence submitted.</div>';
+            list.querySelectorAll('.evidence-open').forEach(button => button.addEventListener('click', () => openCancellationEvidence(button.dataset.requestId)));
+            list.querySelectorAll('.cancellation-decision').forEach(button => button.addEventListener('click', () => reviewCancellationEvidence(button.dataset.requestId, button.dataset.decision)));
+          } catch (error) {
+            list.innerHTML = `<div class="empty-state">${escapeHtml(error.message)}</div>`;
+          }
+        }
+
+        async function openCancellationEvidence(requestId) {
+          const tab = window.open('about:blank', '_blank');
+          try {
+            const response = await fetch(`${API_BASE}/admin/cancellation-requests/${encodeURIComponent(requestId)}/evidence`, { headers: supervisorHeaders() });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to open evidence');
+            if (!tab) throw new Error('Allow pop-ups to view the evidence file.');
+            tab.location.href = data.data;
+          } catch (error) {
+            if (tab) tab.close();
+            alert(error.message);
+          }
+        }
+
+        async function reviewCancellationEvidence(requestId, decision) {
+          const message = decision === 'approve'
+            ? 'Accept the evidence and withdraw the booking without a booking freeze?'
+            : 'Reject the evidence, withdraw the booking, and apply a 24-hour booking freeze?';
+          if (!window.confirm(message)) return;
+          try {
+            const response = await fetch(`${API_BASE}/admin/cancellation-requests/${encodeURIComponent(requestId)}`, {
+              method: 'PATCH',
+              headers: { ...supervisorHeaders(), 'Content-Type': 'application/json' },
+              body: JSON.stringify({ decision })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to review cancellation evidence');
+            alert(data.message);
+            await Promise.all([loadCancellationRequests(), loadApplicationHistory(), loadEventHistory()]);
+          } catch (error) { alert(error.message); }
+        }
+
+        function openEmployeeModal(employeeId) {
+          const employee = allEmployees.find(item => item.id === employeeId);
+          if (!employee) return;
+          document.getElementById('employee-id').value = employee.id;
+          document.getElementById('employee-name').value = employee.name || '';
+          document.getElementById('employee-email').value = employee.email || '';
+          document.getElementById('employee-phone').value = employee.phone || '';
+          document.getElementById('employee-position').value = employee.position || '';
+          document.getElementById('employee-department').value = employee.department || '';
+          document.getElementById('employee-modal').style.display = 'flex';
+        }
+
+        function closeEmployeeModal() {
+          document.getElementById('employee-modal').style.display = 'none';
+        }
+
+        async function deleteCrewAccount(employeeId) {
+          const employee = allEmployees.find(item => item.id === employeeId);
+          if (!employee) return;
+          if (!window.confirm(`Delete Crew account ${employee.id} (${employee.name})? This permanently removes their applications, attendance, wallet, and profile requests.`)) return;
+          if (!window.confirm(`Final confirmation: permanently delete ${employee.id}? This cannot be undone.`)) return;
+          const typedId = window.prompt(`Type ${employee.id} to confirm account deletion`);
+          if (typedId !== employee.id) {
+            alert('Account deletion cancelled: the Employee ID did not match.');
+            return;
+          }
+          try {
+            const response = await fetch(`${API_BASE}/employees/${encodeURIComponent(employee.id)}`, {
+              method: 'DELETE',
+              headers: supervisorHeaders()
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || 'Unable to delete Crew account');
+            await loadDashboardData();
+          } catch (error) {
+            alert(error.message);
+          }
+        }
+
+        document.getElementById('employee-form').addEventListener('submit', async event => {
+          event.preventDefault();
+          const employeeId = document.getElementById('employee-id').value;
+          const response = await fetch(`${API_BASE}/employees/${encodeURIComponent(employeeId)}`, {
+            method: 'PATCH',
+            headers: { ...supervisorHeaders(), 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              name: document.getElementById('employee-name').value,
+              email: document.getElementById('employee-email').value,
+              phone: document.getElementById('employee-phone').value,
+              position: document.getElementById('employee-position').value,
+              department: document.getElementById('employee-department').value
+            })
+          });
+          const result = await response.json();
+          if (!response.ok) {
+            alert(result.message || 'Unable to update crew information');
+            return;
+          }
+          closeEmployeeModal();
+          loadDashboardData();
+        });
+
+      function displayAttendanceTable() {
+        const tbody = document.getElementById('admin-tbody');
+
+        if (filteredAttendanceData.length === 0) {
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="7" class="empty-message">No attendance records found</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = filteredAttendanceData.map(record => {
+          const checkInTime = record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '--:--';
+          const checkOutTime = record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '--:--';
+          const hoursWorked = record.hours_worked ? 
+            `${Math.floor(record.hours_worked)}h ${Math.round((record.hours_worked % 1) * 60)}m` : 
+            '-';
+          const status = record.attendance_status === 'late_and_early_leave'
+            ? 'Late + Early Leave'
+            : record.attendance_status === 'late'
+              ? 'Late'
+              : record.attendance_status === 'early_leave'
+                ? 'Early Leave'
+                : record.check_out_time ? 'Completed' : record.check_in_time ? 'In Progress' : 'Not Checked In';
+          const statusClass = record.attendance_status === 'late' || record.attendance_status === 'early_leave' || record.attendance_status === 'late_and_early_leave'
+            ? 'warning'
+            : record.check_out_time ? 'completed' : record.check_in_time ? 'in-progress' : 'pending';
+
+          return `
+            <tr>
+              <td>${record.employee_id}</td>
+              <td>${record.name || 'Unknown'}</td>
+              <td>${record.position || '-'}</td>
+              <td>${checkInTime}</td>
+              <td>${checkOutTime}</td>
+              <td>${hoursWorked}</td>
+              <td><span class="status-badge ${statusClass}">${status}</span></td>
+            </tr>
+          `;
+        }).join('');
+      }
+
+      function filterEmployees() {
+        const searchTerm = document.getElementById('search-employee').value.toLowerCase();
+        filteredAttendanceData = allAttendanceData.filter(record => {
+          const employeeName = (record.name || '').toLowerCase();
+          const employeeId = (record.employee_id || '').toLowerCase();
+          return employeeName.includes(searchTerm) || employeeId.includes(searchTerm);
+        });
+        displayAttendanceTable();
+      }
+
+      function openFilterModal() {
+        document.getElementById('filter-modal').style.display = 'flex';
+      }
+
+      function closeFilterModal() {
+        document.getElementById('filter-modal').style.display = 'none';
+      }
+
+      function applyAdvancedFilter() {
+        const startDate = document.getElementById('filter-start-date').value;
+        const endDate = document.getElementById('filter-end-date').value;
+        const department = document.getElementById('filter-department').value;
+
+        // Load filtered data from API
+        const params = new URLSearchParams();
+        if (startDate) params.append('startDate', startDate);
+        if (endDate) params.append('endDate', endDate);
+
+        fetch(`${API_BASE}/admin/attendance?${params.toString()}`, { headers: supervisorHeaders() })
+          .then(res => res.json())
+          .then(data => {
+            let records = data.records || [];
+            
+            if (department) {
+              records = records.filter(r => r.position && r.position.includes(department));
+            }
+            
+            filteredAttendanceData = records;
+            displayAttendanceTable();
+            closeFilterModal();
+          })
+          .catch(error => console.error('Error loading filtered data:', error));
+      }
+
+      function refreshData() {
+        loadDashboardData();
+      }
+
+      function exportToCSV() {
+        if (filteredAttendanceData.length === 0) {
+          alert('No data to export');
+          return;
+        }
+
+        const headers = ['Employee ID', 'Name', 'Position', 'Check In', 'Check Out', 'Hours Worked', 'Status'];
+        const rows = filteredAttendanceData.map(record => {
+          const checkInTime = record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '--:--';
+          const checkOutTime = record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '--:--';
+          const hoursWorked = record.hours_worked ? 
+            `${Math.floor(record.hours_worked)}h ${Math.round((record.hours_worked % 1) * 60)}m` : 
+            '-';
+          const status = record.check_out_time ? 'Completed' : record.check_in_time ? 'In Progress' : 'Not Checked In';
+
+          return [
+            record.employee_id,
+            record.name || 'Unknown',
+            record.position || '-',
+            checkInTime,
+            checkOutTime,
+            hoursWorked,
+            status
+          ];
+        });
+
+        const csvContent = [
+          headers.join(','),
+          ...rows.map(row => row.map(cell => `"${cell}"`).join(','))
+        ].join('\n');
+
+        const blob = new Blob([csvContent], { type: 'text/csv' });
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `attendance_${document.getElementById('admin-date').value}.csv`;
+        a.click();
+        window.URL.revokeObjectURL(url);
+      }
+
+      function downloadReport() {
+        alert('Report generation feature coming soon');
+      }
+
+      function generateAlerts() {
+        const alertsList = document.getElementById('alerts-list');
+        const alerts = [];
+
+        // Check for employees not checked in
+        const notCheckedIn = allEmployees.filter(emp => 
+          !allAttendanceData.find(att => att.employee_id === emp.id && att.check_in_time)
+        );
+
+        if (notCheckedIn.length > 0) {
+          alerts.push(`⚠️ ${notCheckedIn.length} employee(s) not checked in`);
+        }
+
+        // Check for employees still checked in
+        const stillCheckedIn = allAttendanceData.filter(att => att.check_in_time && !att.check_out_time);
+        if (stillCheckedIn.length > 0) {
+          alerts.push(`🔄 ${stillCheckedIn.length} employee(s) currently working`);
+        }
+
+        const lateEmployees = allAttendanceData.filter(att => att.late_minutes > 0);
+        if (lateEmployees.length > 0) {
+          alerts.push(`⏰ ${lateEmployees.length} employee(s) arrived late`);
+        }
+
+        const earlyLeaveEmployees = allAttendanceData.filter(att => att.early_leave_minutes > 0);
+        if (earlyLeaveEmployees.length > 0) {
+          alerts.push(`⚠️ ${earlyLeaveEmployees.length} employee(s) left early`);
+        }
+
+        if (alerts.length === 0) {
+          alertsList.innerHTML = '<p class="no-alerts">No alerts</p>';
+        } else {
+          alertsList.innerHTML = alerts.map(alert => `<div class="alert-item">${alert}</div>`).join('');
+        }
+      }
+
+      // Close modal when clicking outside
+      window.onclick = function(event) {
+        const modal = document.getElementById('filter-modal');
+        if (event.target === modal) {
+          modal.style.display = 'none';
+        }
+      }
+    </script>
+  </body>
+</html>

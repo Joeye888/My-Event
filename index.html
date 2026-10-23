@@ -1,0 +1,175 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Event Kaki | Crew Workspace</title>
+    <style>
+      :root {
+        --bg: #0a0d12;
+        --panel: #121821;
+        --panel-soft: #18212b;
+        --line: #273442;
+        --lime: #facc15;
+        --gold: #facc15;
+        --text: #f6f8fb;
+        --muted: #8f9bab;
+        --blue: #58b9ff;
+      }
+
+      * { box-sizing: border-box; }
+      body { margin: 0; overflow-y: scroll; color: var(--text); background: var(--bg); font-family: Arial, Helvetica, sans-serif; }
+      a { color: inherit; text-decoration: none; }
+      .layout { display: grid; grid-template-columns: 220px minmax(0, 1fr); width: 100%; min-height: 100vh; }
+      .sidebar { border-right: 1px solid var(--line); padding: 26px 16px; background: #0d1218; }
+      .logo { margin: 0 10px 42px; color: var(--lime); font-size: 1.15rem; font-weight: 900; letter-spacing: .12em; text-transform: uppercase; }
+      .nav-label { margin: 0 10px 10px; color: #596675; font-size: .68rem; letter-spacing: .12em; text-transform: uppercase; }
+      .side-nav { display: grid; gap: 7px; }
+      .side-nav a { border-radius: 8px; padding: 12px 10px; color: var(--muted); font-size: .88rem; }
+      .side-nav a:hover, .side-nav a.active { color: #10140b; background: var(--lime); font-weight: bold; }
+      .sidebar-note { margin: 45px 10px 0; border-top: 1px solid var(--line); padding-top: 18px; color: var(--muted); font-size: .72rem; line-height: 1.5; }
+      .main { width: min(calc(100% - 48px), 1060px); margin: 0 auto; padding: 24px 0 40px; }
+      .topline { display: flex; justify-content: space-between; align-items: center; gap: 14px; margin-bottom: 22px; }
+      .crumb { color: var(--muted); font-size: .78rem; }
+      .account { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: .78rem; }
+      .avatar { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; color: #111; background: var(--lime); font-weight: bold; }
+      .hero { display: grid; grid-template-columns: 1.3fr .7fr; min-height: 260px; overflow: hidden; border: 1px solid #3b4c5c; border-radius: 14px; background: var(--panel); }
+      .hero-copy { padding: 30px; background: linear-gradient(135deg, #18283a, #121820); }
+      .hero-copy small { color: var(--lime); font-weight: bold; letter-spacing: .13em; text-transform: uppercase; }
+      h1 { max-width: 470px; margin: 14px 0 10px; font-size: clamp(2rem, 5vw, 3.8rem); line-height: .98; letter-spacing: -.06em; }
+      .hero-copy p { max-width: 450px; margin: 0; color: var(--muted); line-height: 1.55; }
+      .hero-image { background: linear-gradient(90deg, rgb(18 24 32 / 15%), rgb(18 24 32 / 0%)), url("./assets/klcc-city.jpg") center / cover; }
+      .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 18px 0; }
+      .summary-card { border: 1px solid var(--line); border-radius: 10px; padding: 16px; background: var(--panel); }
+      .summary-card span { display: block; color: var(--muted); font-size: .72rem; text-transform: uppercase; }
+      .summary-card strong { display: block; margin-top: 9px; color: var(--lime); font-size: 1.65rem; }
+      .content-grid { display: grid; grid-template-columns: 1.4fr .6fr; gap: 16px; }
+      .panel { border: 1px solid var(--line); border-radius: 11px; padding: 19px; background: var(--panel); }
+      .panel-heading { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 15px; }
+      h2 { margin: 0; font-size: 1rem; }
+      .panel-heading a { color: var(--lime); font-size: .75rem; }
+      .job-feed { display: grid; gap: 10px; }
+      .job-item { border-left: 3px solid var(--lime); border-radius: 7px; padding: 14px; background: var(--panel-soft); }
+      .job-item h3 { margin: 0 0 6px; font-size: .9rem; }
+      .job-item p { margin: 0; color: var(--muted); font-size: .75rem; line-height: 1.5; }
+      .job-item footer { display: flex; justify-content: space-between; gap: 10px; margin-top: 12px; color: var(--gold); font-size: .72rem; }
+      .status-card { display: grid; gap: 13px; }
+      .status-line { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .78rem; }
+      .status-line strong { color: var(--text); }
+      .meter { height: 8px; border-radius: 9px; background: #29333e; overflow: hidden; }
+      .meter span { display: block; width: 100%; height: 100%; background: var(--lime); }
+      .tip { border: 1px solid #745e25; border-radius: 8px; padding: 12px; color: #e9d486; background: #211d11; font-size: .75rem; line-height: 1.5; }
+      .checkin-link { display: inline-block; margin-top: 20px; border-radius: 8px; padding: 11px 16px; color: #10140b; background: var(--lime); font-size: .82rem; font-weight: bold; }
+      .checkin-link:hover { background: #fde047; }
+      .empty { color: var(--muted); font-size: .8rem; }
+      @media (max-width: 800px) {
+        .layout { grid-template-columns: 1fr; }
+        .sidebar { border-right: 0; border-bottom: 1px solid var(--line); padding: 15px; }
+        .logo { margin: 0 0 14px; }
+        .nav-label, .sidebar-note { display: none; }
+        .side-nav { display: flex; overflow-x: auto; }
+        .side-nav a { white-space: nowrap; }
+        .main { width: min(100% - 24px, 1060px); padding-top: 18px; }
+        .hero, .content-grid { grid-template-columns: 1fr; }
+        .hero-image { min-height: 150px; order: -1; }
+      }
+      @media (max-width: 520px) {
+        .summary { grid-template-columns: 1fr; }
+        .topline { align-items: flex-start; flex-direction: column; }
+        .hero-copy { padding: 23px; }
+      }
+    </style>
+  </head>
+  <body>
+    <script>
+      const storedRole = sessionStorage.getItem("eventKakiRole");
+      if (sessionStorage.getItem("eventKakiDemoLoggedIn") !== "true" || !storedRole) {
+        window.location.replace("./login.html");
+      } else if (storedRole === "supervisor") {
+        window.location.replace("./admin-dashboard.html");
+      }
+    </script>
+    <div class="layout">
+      <aside class="sidebar">
+        <div class="logo">Event Kaki</div>
+        <div class="nav-label">Crew workspace</div>
+        <nav class="side-nav" aria-label="Crew navigation">
+          <a class="active" href="./index.html">Overview</a>
+          <a href="./checkin.html">Check In/Out</a>
+          <a href="./jobs.html">Find Jobs</a>
+          <a href="./job-history.html">Job History</a>
+          <a href="./my-schedule.html">My Schedule</a>
+          <a href="./my-profile.html">My Profile</a>
+          <a href="./my-wallet.html">My Wallet</a>
+          <a href="./login.html" onclick="sessionStorage.removeItem('eventKakiDemoLoggedIn')">Sign out</a>
+        </nav>
+        <p class="sidebar-note">Your KL event crew workspace for shifts, applications and profile details.</p>
+      </aside>
+
+      <main class="main">
+        <div class="topline">
+          <span class="crumb">Workspace / Overview</span>
+          <div class="account"><span id="current-account">Loading...</span><span class="avatar" id="current-avatar">EK</span></div>
+        </div>
+
+        <section class="hero">
+          <div class="hero-copy">
+            <small>Good morning, Demo Kaki</small>
+            <h1>Your next shift starts here.</h1>
+            <p>Find reliable event work around Kuala Lumpur, apply for a slot and keep your schedule organised.</p>
+            <a class="checkin-link" href="./checkin.html">Open Check In/Out</a>
+          </div>
+          <div class="hero-image" aria-label="Kuala Lumpur city skyline"></div>
+        </section>
+
+        <section class="summary" aria-label="Crew summary">
+          <div class="summary-card"><span>Open shifts</span><strong id="open-count">0</strong></div>
+          <div class="summary-card"><span>My applications</span><strong id="application-count">0</strong></div>
+          <div class="summary-card"><span>Profile status</span><strong>Ready</strong></div>
+        </section>
+
+        <div class="content-grid">
+          <section class="panel">
+            <div class="panel-heading"><h2>Recommended for you</h2><a href="./jobs.html">Browse all →</a></div>
+            <div class="job-feed" id="job-feed"></div>
+          </section>
+          <aside class="panel status-card">
+            <div class="panel-heading"><h2>Account health</h2><a href="./my-profile.html">Edit →</a></div>
+            <div class="status-line"><span>Profile completion</span><strong>100%</strong></div>
+            <div class="meter"><span></span></div>
+            <div class="status-line"><span>Identity verification</span><strong>Protected</strong></div>
+            <div class="status-line"><span>Payment profile</span><strong>Registered</strong></div>
+            <div class="tip">KLCC last-minute crew requests may carry an additional client service charge.</div>
+          </aside>
+        </div>
+      </main>
+    </div>
+    <script src="./jobs.js"></script>
+    <script>
+      const employeeId = sessionStorage.getItem("eventKakiEmployeeId");
+      const role = sessionStorage.getItem("eventKakiRole");
+      if (!employeeId || !role) {
+        window.location.replace("./login.html");
+      } else if (role === "supervisor") {
+        window.location.replace("./admin-dashboard.html");
+      } else {
+        document.getElementById("current-account").textContent =
+          role === "supervisor" ? `Supervisor · ${employeeId}` : `${employeeId} · EPF deducted`;
+        document.getElementById("current-avatar").textContent = employeeId.slice(-2);
+      }
+
+      Promise.all([jobsPromise, applicationsPromise]).then(([activeJobs, applications]) => {
+        document.getElementById("open-count").textContent = activeJobs.reduce((total, job) =>
+          total + job.sections.reduce((count, section) => count + section.shifts.reduce((shiftTotal, shift) => shiftTotal + shift.pax, 0), 0), 0);
+        document.getElementById("application-count").textContent = applications.filter((application) => application.status === "Applied").length;
+        document.getElementById("job-feed").innerHTML = activeJobs.map((job) => `
+        <article class="job-item">
+          <h3>${job.title}</h3>
+          <p>${job.date} · ${job.location}<br />${job.requirements.join(" · ")}</p>
+          <footer><a href="./jobs.html">View shift details →</a><span>Open today</span></footer>
+        </article>
+        `).join("");
+      }).catch(error => console.error("Unable to load overview jobs:", error));
+    </script>
+  </body>
+</html>

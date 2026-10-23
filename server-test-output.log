@@ -1,0 +1,15 @@
+
+🚀 Event Kaki Server is running on http://localhost:3000
+📱 Check In/Out Page: http://localhost:3000/checkin.html
+📊 Admin Dashboard: http://localhost:3000/admin-dashboard.html
+
+📝 Demo Crew Account:
+   Employee ID: N000001
+   Password: 990101-14-0001
+
+📝 Demo Supervisor Account:
+   Employee ID: S000001
+   Password: Supervisor@123
+
+Connected to SQLite database
+Database initialized

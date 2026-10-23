@@ -1,0 +1,734 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Schedule | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <style>
+      .schedule {
+        width: 100%;
+        max-width: none;
+        margin: 0 auto;
+        padding: 14px 0 42px;
+        background: transparent;
+      }
+
+      .schedule-page .workspace-main {
+        width: min(100% - 48px, 1060px);
+        margin: 0 auto;
+        padding: 24px 0 40px;
+      }
+
+      .schedule-page .workspace-topline {
+        width: 100%;
+        margin-bottom: 22px;
+        border: 0;
+        padding: 0;
+        background: transparent;
+      }
+
+      .schedule-page .workspace-layout {
+        width: 100%;
+      }
+
+      .schedule-header,
+      .calendar-toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+      }
+
+      .schedule-header {
+        align-items: flex-start;
+        margin-bottom: 8px;
+      }
+
+      .schedule h1,
+      .calendar-toolbar h2 {
+        margin: 0;
+        color: #f8fafc;
+      }
+
+      .schedule h1 {
+        letter-spacing: -.04em;
+        font-size: 1.05rem;
+      }
+
+      .schedule-subtitle {
+        display: none;
+      }
+
+      .schedule-stats {
+        display: none;
+      }
+
+      .schedule-stat {
+        min-width: 88px;
+        border: 1px solid #2c3947;
+        border-radius: 10px;
+        padding: 9px 12px;
+        background: rgb(5 10 16 / 35%);
+      }
+
+      .schedule-stat span,
+      .schedule-stat strong {
+        display: block;
+      }
+
+      .schedule-stat span {
+        color: var(--workspace-muted);
+        font-size: .66rem;
+      }
+
+      .schedule-stat strong {
+        margin-top: 3px;
+        color: var(--workspace-lime);
+        font-size: 1.15rem;
+      }
+
+      .schedule-header a {
+        color: var(--workspace-lime);
+        text-decoration: none;
+      }
+
+      .calendar-toolbar {
+        margin-bottom: 3px;
+        position: relative;
+        min-height: 42px;
+        border-top: 0;
+        padding-top: 0;
+      }
+
+      .calendar-toolbar h2 {
+        color: #f8fafc;
+        font-size: .9rem;
+        position: absolute;
+        left: 50%;
+        transform: translateX(-50%);
+      }
+
+      .calendar-actions {
+        display: flex;
+        gap: 8px;
+      }
+
+      .calendar-toolbar button {
+        min-width: 30px;
+        height: 30px;
+        border: 1px solid var(--workspace-line);
+        border-radius: 8px;
+        padding: 0 10px;
+        color: var(--workspace-lime);
+        background: #17212c;
+        cursor: pointer;
+        font: inherit;
+        font-size: .8rem;
+      }
+
+      .calendar-toolbar button:hover {
+        color: #111;
+        border-color: var(--workspace-lime);
+        background: var(--workspace-lime);
+      }
+
+      .calendar-toolbar #today-button {
+        border-color: #809a30;
+        color: var(--workspace-lime);
+      }
+
+      .calendar-toolbar #today-button:hover {
+        color: #111;
+        background: var(--workspace-lime);
+      }
+
+      .calendar {
+        overflow: hidden;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        min-width: 0;
+        padding-bottom: 4px;
+      }
+
+      .calendar-legend {
+        display: flex;
+        gap: 14px;
+        margin: 0 0 8px;
+        color: var(--workspace-muted);
+        font-size: .7rem;
+      }
+
+      .legend-item::before {
+        content: "";
+        display: inline-block;
+        width: 7px;
+        height: 7px;
+        margin-right: 6px;
+        border-radius: 50%;
+        background: var(--workspace-lime);
+      }
+
+      .legend-item.pending::before {
+        background: #facc15;
+      }
+
+      .legend-item.approved::before {
+        background: #67e8f9;
+      }
+
+      .legend-item.rejected::before {
+        background: #f87171;
+      }
+
+      .legend-item.cancelled::before {
+        background: #94a3b8;
+      }
+
+      .weekday-row,
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(7, 1fr);
+      }
+
+      .weekday {
+        padding: 6px;
+        color: #8290a0;
+        background: transparent;
+        font-size: 0.62rem;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .day {
+        min-height: 52px;
+        width: 100%;
+        margin: 2px;
+        border: 1px solid #211f2b;
+        border-radius: 6px;
+        padding: 7px 6px;
+        color: #9aa7b7;
+        background: rgb(19 16 25 / 45%);
+        cursor: pointer;
+        font: inherit;
+        text-align: left;
+      }
+
+      .day.empty {
+        cursor: default;
+        border-color: #171d25;
+        background: #0d1117;
+        opacity: .65;
+      }
+
+      .day.adjacent-day {
+        border-color: #17151f;
+        color: #4e4b59;
+        background: rgb(17 15 22 / 28%);
+        cursor: default;
+      }
+
+      .day.adjacent-day .day-number {
+        color: #4e4b59;
+      }
+
+      .day-number {
+        display: block;
+        margin-bottom: 3px;
+        color: #a8b3c2;
+        font-size: .7rem;
+      }
+
+      .day.selected {
+        outline: 1px solid var(--workspace-lime);
+        outline-offset: -1px;
+      }
+
+      .day.today .day-number {
+        color: var(--workspace-lime);
+        font-weight: bold;
+      }
+
+      .day.has-application {
+        border-color: #211f2b;
+        background: rgb(19 16 25 / 45%);
+      }
+
+      .event-chip {
+        overflow: hidden;
+        display: block;
+        margin: 3px 0;
+        border: 0;
+        border-radius: 5px;
+        padding: 3px 4px;
+        color: #0b1710;
+        background: linear-gradient(90deg, #63ed91, #a4f25e);
+        font-size: .62rem;
+        font-weight: bold;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .event-chip.pending {
+        color: #1f1600;
+        background: #facc15;
+      }
+
+      .event-chip.approved {
+        color: #062b32;
+        background: #67e8f9;
+      }
+
+      .event-chip.rejected {
+        color: #260707;
+        background: #fca5a5;
+      }
+
+      .event-chip.cancelled,
+      .event-chip.expired,
+      .event-chip.withdrawn {
+        color: #101820;
+        background: #94a3b8;
+      }
+
+      .day-details {
+        display: none;
+      }
+
+      .cancellation-modal {
+        position: fixed;
+        inset: 0;
+        z-index: 50;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgb(2 6 23 / 78%);
+      }
+      .cancellation-dialog {
+        width: min(100%, 520px);
+        border: 1px solid #334155;
+        border-radius: 16px;
+        padding: 24px;
+        background: #111827;
+      }
+      .cancellation-dialog label { display: grid; gap: 8px; margin: 16px 0; color: #cbd5e1; }
+      .cancellation-dialog textarea,
+      .cancellation-dialog input { width: 100%; border: 1px solid #475569; border-radius: 8px; padding: 10px; color: #f8fafc; background: #0f172a; }
+      .cancellation-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 18px; }
+      .cancellation-actions button,
+      .cancel-booking-button { border: 1px solid #475569; border-radius: 8px; padding: 8px 12px; color: #e2e8f0; background: #1e293b; cursor: pointer; }
+      .cancel-booking-button { margin-top: 8px; border-color: #f87171; color: #fecaca; }
+
+      .day-details h2 {
+        margin: 0 0 10px;
+        color: var(--yellow);
+        font-size: 1.05rem;
+      }
+
+      .day-details p {
+        margin: 7px 0;
+        color: var(--muted);
+      }
+
+      .application-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 14px;
+      }
+
+      .cancel-button {
+        flex: 0 0 auto;
+        border: 1px solid #f87171;
+        border-radius: 6px;
+        padding: 7px 10px;
+        color: #fca5a5;
+        background: transparent;
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.78rem;
+      }
+
+      .cancel-button:hover:not(:disabled) {
+        color: #111;
+        background: var(--workspace-lime);
+        border-color: var(--workspace-lime);
+      }
+
+      .cancel-button:disabled {
+        border-color: #64748b;
+        color: #94a3b8;
+        cursor: not-allowed;
+      }
+
+      .cancel-note {
+        display: block;
+        margin-top: 4px;
+        color: #fca5a5;
+        font-size: 0.78rem;
+      }
+
+      @media (max-width: 650px) {
+        .schedule {
+          width: 100%;
+          padding: 14px 0 30px;
+        }
+
+        .schedule-page .workspace-main {
+          width: min(100% - 24px, 1060px);
+          padding-top: 18px;
+        }
+
+        .schedule-header {
+          display: block;
+        }
+
+        .schedule-stats {
+          margin-top: 16px;
+        }
+
+        .calendar {
+          min-width: 0;
+          overflow-x: auto;
+        }
+
+        .weekday-row,
+        .calendar-grid {
+          min-width: 620px;
+        }
+
+        .day {
+          min-height: 84px;
+          padding: 5px 4px;
+        }
+
+        .weekday {
+          font-size: 0.55rem;
+        }
+
+        .event-chip {
+          font-size: 0.52rem;
+        }
+      }
+    </style>
+  </head>
+  <body class="workspace-page schedule-page">
+    <script>
+      if (sessionStorage.getItem("eventKakiDemoLoggedIn") !== "true") {
+        window.location.replace("./login.html");
+      }
+    </script>
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Crew workspace</div>
+        <nav class="workspace-nav" aria-label="Crew navigation">
+          <a href="./index.html">Overview</a>
+          <a href="./checkin.html">Check In/Out</a>
+          <a href="./jobs.html">Find Jobs</a>
+          <a href="./job-history.html">Job History</a>
+          <a class="active" href="./my-schedule.html">My Schedule</a>
+          <a href="./my-profile.html">My Profile</a>
+          <a href="./my-wallet.html">My Wallet</a>
+          <a href="./login.html" onclick="sessionStorage.removeItem('eventKakiDemoLoggedIn')">Sign out</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline"><span>Workspace / My Schedule</span><span class="workspace-account" id="current-account">Loading...</span></div>
+    <main class="schedule">
+      <div class="schedule-header">
+        <div>
+          <h1>My Schedule</h1>
+          <p class="schedule-subtitle">Keep track of your upcoming event shifts.</p>
+        </div>
+        <div class="schedule-stats" aria-label="Schedule summary">
+          <div class="schedule-stat"><span>Applications</span><strong id="application-total">0</strong></div>
+          <div class="schedule-stat"><span>This month</span><strong id="month-total">0</strong></div>
+        </div>
+      </div>
+      <div class="calendar-toolbar">
+        <button type="button" id="previous-month" aria-label="Previous month">‹</button>
+        <h2 id="month-title"></h2>
+        <div class="calendar-actions">
+          <button type="button" id="next-month" aria-label="Next month">›</button>
+          <button type="button" id="today-button">Today</button>
+        </div>
+      </div>
+      <div class="calendar-legend">
+        <span class="legend-item approved">Approved</span>
+        <span class="legend-item pending">Pending</span>
+        <span class="legend-item rejected">Rejected</span>
+        <span class="legend-item cancelled">Cancelled / Expired / Withdrawn</span>
+      </div>
+      <section class="calendar" aria-label="Monthly work schedule">
+        <div class="weekday-row">
+          <div class="weekday">SUN</div>
+          <div class="weekday">MON</div>
+          <div class="weekday">TUE</div>
+          <div class="weekday">WED</div>
+          <div class="weekday">THU</div>
+          <div class="weekday">FRI</div>
+          <div class="weekday">SAT</div>
+        </div>
+        <div class="calendar-grid" id="calendar-grid"></div>
+      </section>
+      <section class="day-details" id="day-details"></section>
+    </main>
+      </div>
+    </div>
+    <div class="cancellation-modal" id="cancellation-modal" role="dialog" aria-modal="true" aria-labelledby="cancellation-title">
+      <form class="cancellation-dialog" id="cancellation-form">
+        <h2 id="cancellation-title">Cancel booking</h2>
+        <p>Cancel at least 24 hours before the shift. Inside 3 hours, no reason/evidence causes a 1-month booking freeze. A reason with evidence goes to Supervisor review; unverified evidence causes a 24-hour freeze. Other platform access remains available.</p>
+        <input type="hidden" id="cancellation-application-id" />
+        <label>Reason (leave blank for a cancellation without reason)
+          <textarea id="cancellation-reason" rows="3"></textarea>
+        </label>
+        <label>Evidence for late cancellation (PDF, JPEG, PNG or WebP; max 5 MB)
+          <input id="cancellation-evidence" type="file" accept="application/pdf,image/jpeg,image/png,image/webp" />
+        </label>
+        <div id="cancellation-form-message" role="status"></div>
+        <div class="cancellation-actions">
+          <button type="button" id="close-cancellation-modal">Back</button>
+          <button type="submit">Submit cancellation</button>
+        </div>
+      </form>
+    </div>
+    <script>
+      const employeeId = sessionStorage.getItem("eventKakiEmployeeId");
+      const role = sessionStorage.getItem("eventKakiRole");
+      if (!employeeId || !role) {
+        window.location.replace("./login.html");
+      } else if (role === "supervisor") {
+        window.location.replace("./admin-dashboard.html");
+      } else {
+        document.getElementById("current-account").textContent =
+          role === "supervisor" ? `Supervisor · ${employeeId}` : `${employeeId} · EPF deducted`;
+      }
+
+      let applications = [];
+      const monthTitle = document.getElementById("month-title");
+      const calendarGrid = document.getElementById("calendar-grid");
+      const dayDetails = document.getElementById("day-details");
+      const cancellationModal = document.getElementById("cancellation-modal");
+      const applicationTotal = document.getElementById("application-total");
+      const monthTotal = document.getElementById("month-total");
+      let applicationByDate = {};
+      const formatDate = (year, month, day) =>
+        `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
+      const today = new Date();
+      let displayedMonth = new Date(today.getFullYear(), today.getMonth(), 1);
+      let selectedDate = formatDate(today.getFullYear(), today.getMonth(), today.getDate());
+
+      function normalizeStatus(value) {
+        const status = String(value || "").trim();
+        if (!status) return "Pending";
+        if (status === "Applied") return "Pending";
+        if (status === "Job cancelled") return "Cancelled";
+        return status;
+      }
+
+      function buildApplicationMap(list) {
+        return list.reduce((groups, application) => {
+          const dateKey = application.date_key || application.dateKey || application.date || selectedDate;
+          (groups[dateKey] ||= []).push(application);
+          return groups;
+        }, {});
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? "").replace(/[&<>"']/g, character => ({
+          "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#039;"
+        }[character]));
+      }
+
+      function showDetails(dateKey) {
+        selectedDate = dateKey;
+        dayDetails.style.display = "block";
+        const date = new Date(`${dateKey}T00:00:00`);
+        const dateText = date.toLocaleDateString("en-MY", {
+          weekday: "long",
+          day: "numeric",
+          month: "long",
+          year: "numeric",
+        });
+        const dayApplications = applicationByDate[dateKey] || [];
+        dayDetails.innerHTML = `<h2>${dateText}</h2>${
+          dayApplications.length
+            ? dayApplications.map((application) => {
+              const status = normalizeStatus(application.status);
+              const displayStatus = application.cancellation_request_status === "Pending"
+                ? "Cancellation pending review"
+                : status;
+              const jobName = application.job_title || application.section || "Job";
+              const time = application.shift_time || application.call_time || application.time || "Time TBD";
+              const color = displayStatus === "Approved" ? "#67e8f9" : displayStatus === "Rejected" ? "#fca5a5" : ["Cancelled", "Expired", "Withdrawn"].includes(displayStatus) ? "#94a3b8" : "#facc15";
+              const canCancel = ["Pending", "Approved"].includes(status) && application.cancellation_request_status !== "Pending";
+              return `
+                <div class="application-row">
+                  <div>
+                    <p><strong>${escapeHtml(jobName)}</strong> · ⏱️ ${escapeHtml(time)} · ${escapeHtml(application.location || "Event location")} · <span style="color:${color}; font-weight:bold;">${escapeHtml(displayStatus)}</span></p>
+                    ${canCancel ? `<button type="button" class="cancel-booking-button" data-application-id="${escapeHtml(application.id)}">Cancel booking</button>` : ""}
+                  </div>
+                </div>
+              `;
+            }).join("")
+            : "<p>No applications on this date.</p>"
+        }`;
+      }
+
+      function renderCalendar() {
+        const year = displayedMonth.getFullYear();
+        const month = displayedMonth.getMonth();
+        const todayKey = formatDate(today.getFullYear(), today.getMonth(), today.getDate());
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        monthTitle.textContent = displayedMonth.toLocaleDateString("en-MY", { month: "long", year: "numeric" });
+        applicationTotal.textContent = applications.length;
+        monthTotal.textContent = applications.filter((application) => {
+          const dateKey = application.date_key || application.dateKey || application.date || "";
+          return dateKey.startsWith(`${year}-${String(month + 1).padStart(2, "0")}`);
+        }).length;
+        calendarGrid.innerHTML = "";
+
+        const previousMonthDays = new Date(year, month, 0).getDate();
+        for (let index = firstDay - 1; index >= 0; index -= 1) {
+          const dayElement = document.createElement("div");
+          dayElement.className = "day adjacent-day";
+          dayElement.innerHTML = `<span class="day-number">${previousMonthDays - index}</span>`;
+          calendarGrid.appendChild(dayElement);
+        }
+
+        for (let day = 1; day <= daysInMonth; day += 1) {
+          const dateKey = formatDate(year, month, day);
+          const dayApplications = applicationByDate[dateKey] || [];
+          const dayElement = document.createElement("button");
+          dayElement.type = "button";
+          dayElement.className = `day${dateKey === selectedDate ? " selected" : ""}${dateKey === todayKey ? " today" : ""}${dayApplications.length ? " has-application" : ""}`;
+          dayElement.innerHTML = `<span class="day-number">${day}</span>${dayApplications
+            .map((application) => {
+              const statusClass = normalizeStatus(application.status).toLowerCase().replace(/[^a-z]+/g, "-");
+              return `<span class="event-chip ${statusClass}">${application.shift_time || application.call_time || application.time || "Shift"}</span>`;
+            })
+            .join("")}`;
+          dayElement.addEventListener("click", () => {
+            showDetails(dateKey);
+            renderCalendar();
+          });
+          calendarGrid.appendChild(dayElement);
+        }
+
+        const renderedDays = firstDay + daysInMonth;
+        const trailingDays = renderedDays <= 35 ? 35 - renderedDays : 42 - renderedDays;
+        for (let day = 1; day <= trailingDays; day += 1) {
+          const dayElement = document.createElement("div");
+          dayElement.className = "day adjacent-day";
+          dayElement.innerHTML = `<span class="day-number">${day}</span>`;
+          calendarGrid.appendChild(dayElement);
+        }
+      }
+
+      async function loadApplications() {
+        try {
+          const response = await fetch('/api/job-applications', {
+            headers: { 'X-Auth-Token': sessionStorage.getItem('eventKakiAuthToken') || '' }
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || 'Unable to load schedule');
+          applications = (data.applications || []).filter((application) => {
+            const dateKey = application.date_key || application.dateKey || application.date;
+            return Boolean(dateKey);
+          });
+          applicationByDate = buildApplicationMap(applications);
+          renderCalendar();
+          showDetails(selectedDate);
+        } catch (error) {
+          dayDetails.innerHTML = `<h2>My Schedule</h2><p>${error.message}</p>`;
+          dayDetails.style.display = 'block';
+        }
+
+        document.addEventListener("click", event => {
+          const button = event.target.closest(".cancel-booking-button");
+          if (!button) return;
+          document.getElementById("cancellation-application-id").value = button.dataset.applicationId;
+          document.getElementById("cancellation-reason").value = "";
+          document.getElementById("cancellation-evidence").value = "";
+          document.getElementById("cancellation-form-message").textContent = "";
+          cancellationModal.style.display = "flex";
+        });
+
+        document.getElementById("close-cancellation-modal").addEventListener("click", () => {
+          cancellationModal.style.display = "none";
+        });
+
+        document.getElementById("cancellation-form").addEventListener("submit", async event => {
+          event.preventDefault();
+          const submitButton = event.currentTarget.querySelector('[type="submit"]');
+          const evidenceFile = document.getElementById("cancellation-evidence").files[0];
+          const reason = document.getElementById("cancellation-reason").value.trim();
+          const message = document.getElementById("cancellation-form-message");
+          submitButton.disabled = true;
+          try {
+            let evidenceData = "";
+            if (evidenceFile) {
+              if (evidenceFile.size > 5 * 1024 * 1024) throw new Error("Evidence file must be 5 MB or smaller.");
+              evidenceData = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(String(reader.result || ""));
+                reader.onerror = () => reject(new Error("Unable to read evidence file."));
+                reader.readAsDataURL(evidenceFile);
+              });
+            }
+            const response = await fetch(`/api/job-applications/${encodeURIComponent(document.getElementById("cancellation-application-id").value)}/cancel`, {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                "X-Auth-Token": sessionStorage.getItem("eventKakiAuthToken") || ""
+              },
+              body: JSON.stringify({
+                reason,
+                evidenceData,
+                evidenceName: evidenceFile ? evidenceFile.name : ""
+              })
+            });
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Unable to cancel booking");
+            message.textContent = data.message;
+            if (data.blockedDays || data.blockedHours) window.alert(data.message);
+            await loadApplications();
+            window.setTimeout(() => { cancellationModal.style.display = "none"; }, 1300);
+          } catch (error) {
+            message.textContent = error.message;
+          } finally {
+            submitButton.disabled = false;
+          }
+        });
+      }
+
+      document.getElementById("previous-month").addEventListener("click", () => {
+        displayedMonth.setMonth(displayedMonth.getMonth() - 1);
+        renderCalendar();
+      });
+
+      document.getElementById("next-month").addEventListener("click", () => {
+        displayedMonth.setMonth(displayedMonth.getMonth() + 1);
+        renderCalendar();
+      });
+
+      document.getElementById("today-button").addEventListener("click", () => {
+        const todayDate = new Date();
+        displayedMonth = new Date(todayDate.getFullYear(), todayDate.getMonth(), 1);
+        selectedDate = formatDate(todayDate.getFullYear(), todayDate.getMonth(), todayDate.getDate());
+        renderCalendar();
+        showDetails(selectedDate);
+      });
+
+      loadApplications();
+      dayDetails.style.display = "none";
+      window.setInterval(loadApplications, 30000);
+    </script>
+  </body>
+</html>

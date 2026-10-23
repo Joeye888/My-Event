@@ -1,0 +1,364 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Check In/Out | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <link rel="stylesheet" href="./checkin.css" />
+  </head>
+  <body class="workspace-page">
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Time Tracking</div>
+        <nav class="workspace-nav">
+          <a href="./index.html" class="nav-item">Overview</a>
+          <a href="./checkin.html" class="nav-item active">Check In/Out</a>
+          <a href="./jobs.html" class="nav-item">Find Jobs</a>
+          <a href="./job-history.html" class="nav-item">Job History</a>
+          <a href="./my-schedule.html" class="nav-item">My Schedule</a>
+          <a href="./my-profile.html" class="nav-item">My Profile</a>
+          <a href="./my-wallet.html" class="nav-item">My Wallet</a>
+          <a href="./login.html" class="nav-item" onclick="sessionStorage.clear()">Sign out</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline">
+          <span>Workspace / Check In/Out</span>
+          <span class="workspace-account" id="current-user">Loading...</span>
+        </div>
+        <main class="checkin-container">
+          <section class="checkin-panel">
+            <h1>Employee Time Tracking</h1>
+            
+            <div class="current-time-display">
+              <div class="time-box">
+                <h2 id="current-time">00:00:00</h2>
+                <p id="current-date">Loading...</p>
+              </div>
+            </div>
+
+            <div class="today-status">
+              <div class="status-card">
+                <label>Status Today</label>
+                <div class="status-badge" id="status-badge">Not Checked In</div>
+              </div>
+              <div class="status-card">
+                <label>Check In Time</label>
+                <div class="status-value" id="check-in-time">--:--</div>
+              </div>
+              <div class="status-card">
+                <label>Check Out Time</label>
+                <div class="status-value" id="check-out-time">--:--</div>
+              </div>
+              <div class="status-card">
+                <label>Hours Worked</label>
+                <div class="status-value" id="hours-worked">0h 0m</div>
+              </div>
+            </div>
+
+            <p id="eligibility-message" class="empty-state">Checking your approved shift...</p>
+            <div class="checkin-actions">
+              <button class="action-button check-in-btn" id="check-in-btn" onclick="handleCheckIn()">
+                Check In
+              </button>
+              <button class="action-button check-out-btn" id="check-out-btn" onclick="handleCheckOut()" disabled>
+                Check Out
+              </button>
+            </div>
+
+            <div class="notice" id="checkin-notice"></div>
+            <div class="attendance-alert" id="attendance-alert" hidden></div>
+
+            <div class="history-section">
+              <h2>Today's Timeline</h2>
+              <div class="timeline" id="timeline">
+                <p class="empty-state">No check-ins yet today</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="checkin-sidebar">
+            <div class="sidebar-card">
+              <h3>Quick Stats</h3>
+              <div class="stat-item">
+                <span>This Week</span>
+                <strong id="weekly-hours">0h</strong>
+              </div>
+              <div class="stat-item">
+                <span>This Month</span>
+                <strong id="monthly-hours">0h</strong>
+              </div>
+              <div class="stat-item">
+                <span>Total Hours</span>
+                <strong id="total-hours">0h</strong>
+              </div>
+            </div>
+
+            <div class="sidebar-card">
+              <h3>Reminders</h3>
+              <ul class="reminders-list">
+                <li>Remember to check out before leaving</li>
+                <li>Your shift ends at 6:00 PM</li>
+                <li>Breaks are tracked automatically</li>
+              </ul>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = 'http://localhost:3000/api';
+      let currentEmployeeId = null;
+      let todayCheckIn = null;
+      let todayCheckOut = null;
+
+      // Check if user is logged in
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!checkAuth()) {
+          return;
+        }
+        loadTodayStatus();
+        updateClock();
+        setInterval(updateClock, 1000);
+        setInterval(loadTodayStatus, 30000); // Refresh every 30 seconds
+      });
+
+      function checkAuth() {
+        currentEmployeeId = sessionStorage.getItem('eventKakiEmployeeId');
+        const role = sessionStorage.getItem('eventKakiRole');
+
+        if (!currentEmployeeId || !role) {
+          window.location.replace('./login.html');
+          return false;
+        }
+        if (role === 'supervisor') {
+          window.location.replace('./admin-dashboard.html');
+          return false;
+        }
+
+        const accountLabel = role === 'supervisor' ? 'Supervisor' : 'Employee';
+        document.getElementById('current-user').textContent = `${accountLabel}: ${currentEmployeeId}`;
+        return true;
+      }
+
+      function updateClock() {
+        const now = new Date();
+        document.getElementById('current-time').textContent = now.toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+        
+        document.getElementById('current-date').textContent = now.toLocaleDateString('en-US', {
+          weekday: 'long',
+          month: 'long',
+          day: 'numeric',
+          year: 'numeric'
+        });
+      }
+
+      async function handleCheckIn() {
+        try {
+          if (!navigator.geolocation) {
+            showNotice('Location access is required to check in at the event venue.', 'error');
+            return;
+          }
+          const position = await new Promise((resolve, reject) => {
+            navigator.geolocation.getCurrentPosition(resolve, reject, {
+              enableHighAccuracy: true,
+              timeout: 10000,
+              maximumAge: 30000
+            });
+          });
+          const response = await fetch(`${API_BASE}/checkin`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Auth-Token': sessionStorage.getItem('eventKakiAuthToken') || ''
+            },
+            body: JSON.stringify({
+              employeeId: currentEmployeeId,
+              latitude: position.coords.latitude,
+              longitude: position.coords.longitude
+            })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            showNotice('Check in successful!', 'success');
+            document.getElementById('check-in-btn').disabled = true;
+            document.getElementById('check-out-btn').disabled = false;
+            loadTodayStatus();
+          } else {
+            showNotice(data.message || 'Check in failed', 'error');
+          }
+        } catch (error) {
+          showNotice('Error checking in: ' + error.message, 'error');
+        }
+      }
+
+      async function handleCheckOut() {
+        try {
+          const response = await fetch(`${API_BASE}/checkout`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-Auth-Token': sessionStorage.getItem('eventKakiAuthToken') || ''
+            },
+            body: JSON.stringify({ employeeId: currentEmployeeId })
+          });
+          
+          const data = await response.json();
+          
+          if (response.ok) {
+            showNotice('Check out successful!', 'success');
+            document.getElementById('check-in-btn').disabled = false;
+            document.getElementById('check-out-btn').disabled = true;
+            loadTodayStatus();
+          } else {
+            showNotice(data.message || 'Check out failed', 'error');
+          }
+        } catch (error) {
+          showNotice('Error checking out: ' + error.message, 'error');
+        }
+      }
+
+      async function loadTodayStatus() {
+        try {
+          const response = await fetch(`${API_BASE}/attendance/today/${currentEmployeeId}`, {
+            headers: {
+              'X-Auth-Token': sessionStorage.getItem('eventKakiAuthToken') || ''
+            }
+          });
+          const data = await response.json();
+          
+          if (response.ok) {
+            updateStatusDisplay(data);
+          }
+        } catch (error) {
+          console.error('Error loading status:', error);
+        }
+      }
+
+      function updateStatusDisplay(data) {
+        const checkInButton = document.getElementById('check-in-btn');
+        const checkOutButton = document.getElementById('check-out-btn');
+        const eligibilityMessage = document.getElementById('eligibility-message');
+        eligibilityMessage.textContent = data.canCheckIn
+          ? `Approved shift today: ${data.approvedJobTitle || 'Event shift'}. Check in is available within 150m of the venue.`
+          : 'Check in and check out are available only for Crew with an approved job scheduled today. Venue limit: 150m.';
+        eligibilityMessage.hidden = Boolean(data.canCheckIn);
+        checkInButton.disabled = !data.canCheckIn || Boolean(data.checkInTime);
+        checkOutButton.disabled = !data.checkInTime || Boolean(data.checkOutTime);
+
+        if (data.checkInTime) {
+          const checkInDate = new Date(data.checkInTime);
+          document.getElementById('check-in-time').textContent = checkInDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+
+        if (data.checkOutTime) {
+          const checkOutDate = new Date(data.checkOutTime);
+          document.getElementById('check-out-time').textContent = checkOutDate.toLocaleTimeString('en-US', {
+            hour: '2-digit',
+            minute: '2-digit'
+          });
+        }
+
+        updateAttendanceAlert(data);
+
+        if (data.hoursWorked) {
+          const hours = Math.floor(data.hoursWorked);
+          const minutes = Math.round((data.hoursWorked - hours) * 60);
+          document.getElementById('hours-worked').textContent = `${hours}h ${minutes}m`;
+        }
+
+        function updateAttendanceAlert(data) {
+          const alert = document.getElementById('attendance-alert');
+          const messages = [];
+
+          if (data.lateMinutes > 0) {
+            messages.push(`Late arrival: ${data.lateMinutes} minute${data.lateMinutes === 1 ? '' : 's'}.`);
+          }
+          if (data.earlyLeaveMinutes > 0) {
+            messages.push(`Early leave: ${data.earlyLeaveMinutes} minute${data.earlyLeaveMinutes === 1 ? '' : 's'}.`);
+          }
+
+          alert.textContent = messages.join(' ');
+          alert.hidden = messages.length === 0;
+          alert.className = messages.length === 0 ? 'attendance-alert' : 'attendance-alert warning';
+        }
+
+        const statusBadge = document.getElementById('status-badge');
+        if (data.checkOutTime) {
+          statusBadge.textContent = 'Checked Out';
+          statusBadge.className = 'status-badge checked-out';
+        } else if (data.checkInTime) {
+          statusBadge.textContent = 'Checked In';
+          statusBadge.className = 'status-badge checked-in';
+        } else {
+          statusBadge.textContent = 'Not Checked In';
+          statusBadge.className = 'status-badge not-checked-in';
+        }
+
+        // Update timeline
+        updateTimeline(data);
+      }
+
+      function updateTimeline(data) {
+        const timeline = document.getElementById('timeline');
+        timeline.innerHTML = '';
+
+        if (data.checkInTime) {
+          const checkInDate = new Date(data.checkInTime);
+          const timelineItem = document.createElement('div');
+          timelineItem.className = 'timeline-item';
+          timelineItem.innerHTML = `
+            <div class="timeline-dot checked-in"></div>
+            <div class="timeline-content">
+              <span class="timeline-label">Checked In</span>
+              <span class="timeline-time">${checkInDate.toLocaleTimeString()}</span>
+            </div>
+          `;
+          timeline.appendChild(timelineItem);
+        }
+
+        if (data.checkOutTime) {
+          const checkOutDate = new Date(data.checkOutTime);
+          const timelineItem = document.createElement('div');
+          timelineItem.className = 'timeline-item';
+          timelineItem.innerHTML = `
+            <div class="timeline-dot checked-out"></div>
+            <div class="timeline-content">
+              <span class="timeline-label">Checked Out</span>
+              <span class="timeline-time">${checkOutDate.toLocaleTimeString()}</span>
+            </div>
+          `;
+          timeline.appendChild(timelineItem);
+        }
+
+        if (timeline.children.length === 0) {
+          timeline.innerHTML = '<p class="empty-state">No check-ins yet today</p>';
+        }
+      }
+
+      function showNotice(message, type) {
+        const notice = document.getElementById('checkin-notice');
+        notice.textContent = message;
+        notice.className = `notice ${type}`;
+        notice.style.display = 'block';
+        
+        setTimeout(() => {
+          notice.style.display = 'none';
+        }, 4000);
+      }
+    </script>
+  </body>
+</html>

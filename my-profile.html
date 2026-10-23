@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Profile | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <style>
+      .profile {
+        width: min(100%, 980px);
+        padding: 40px;
+        border: 0;
+        border-radius: 0;
+        background: transparent;
+        box-shadow: none;
+      }
+
+      .profile-header {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 28px;
+      }
+
+      .profile-header h1 {
+        margin: 0;
+        color: var(--yellow);
+      }
+
+      .profile-header a {
+        color: var(--yellow);
+        text-decoration: none;
+      }
+
+      .profile-section {
+        margin-top: 24px;
+        border-top: 1px solid #475569;
+        padding-top: 22px;
+      }
+
+      .profile-section h2 {
+        margin: 0 0 16px;
+        color: var(--yellow);
+        font-size: 1.15rem;
+      }
+
+      .profile-section h3 {
+        margin: 24px 0 14px;
+        color: var(--text);
+        font-size: 1rem;
+      }
+
+      .profile-form {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 16px;
+      }
+
+      .profile-form label {
+        display: grid;
+        gap: 7px;
+        color: var(--muted);
+        font-size: 0.88rem;
+        font-weight: bold;
+      }
+
+      .profile-form input,
+      .profile-form select,
+      .profile-form textarea {
+        width: 100%;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        padding: 12px;
+        color: var(--text);
+        background: #0f0f0f;
+        font: inherit;
+      }
+
+      .profile-form textarea {
+        min-height: 90px;
+        resize: vertical;
+      }
+
+      .profile-form input:focus,
+      .profile-form select:focus,
+      .profile-form textarea:focus {
+        border-color: var(--yellow);
+        outline: none;
+      }
+
+      .profile-form input:disabled {
+        border-color: #334155;
+        color: #94a3b8;
+        background: #111827;
+        cursor: not-allowed;
+      }
+
+      .full-width {
+        grid-column: 1 / -1;
+      }
+
+      .locked-label {
+        color: #94a3b8;
+      }
+
+      .locked-badge {
+        width: fit-content;
+        border: 1px solid #64748b;
+        border-radius: 999px;
+        padding: 3px 7px;
+        color: #94a3b8;
+        font-size: 0.68rem;
+        letter-spacing: 0.06em;
+      }
+
+      .notice {
+        display: block;
+        margin: 0 0 16px;
+      }
+
+      .notice-action {
+        margin-left: 12px;
+        border: 1px solid var(--yellow);
+        border-radius: 6px;
+        padding: 7px 10px;
+        color: var(--yellow);
+        background: transparent;
+        cursor: pointer;
+        font: inherit;
+      }
+
+      .notice-action:disabled {
+        cursor: default;
+        opacity: 0.65;
+      }
+
+      .bank-notice {
+        border: 1px solid rgb(250 204 21 / 35%);
+        border-radius: 8px;
+        padding: 14px;
+        color: var(--muted);
+        background: rgb(250 204 21 / 7%);
+        line-height: 1.5;
+      }
+
+      .bank-notice strong {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--yellow);
+      }
+
+      .profile-photo {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        margin-bottom: 18px;
+      }
+
+      .profile-photo-preview {
+        width: 70px;
+        height: 90px;
+        border: 1px solid #475569;
+        border-radius: 50%;
+        object-fit: cover;
+        background: #111827;
+      }
+
+      .profile-photo-locked {
+        color: var(--muted);
+        font-size: 0.82rem;
+        line-height: 1.5;
+      }
+
+      .profile-photo-locked strong {
+        display: block;
+        margin-bottom: 4px;
+        color: var(--text);
+      }
+
+      .profile-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 26px;
+      }
+
+      .profile-actions button,
+      .profile-actions a {
+        border: 1px solid var(--yellow);
+        border-radius: 8px;
+        padding: 12px 16px;
+        color: var(--yellow);
+        background: transparent;
+        cursor: pointer;
+        font: inherit;
+        text-decoration: none;
+      }
+
+      .profile-actions .primary {
+        color: var(--black);
+        background: var(--yellow);
+      }
+
+      @media (max-width: 680px) {
+        .profile {
+          padding: 28px 20px;
+        }
+
+        .profile-header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+
+        .profile-form {
+          grid-template-columns: 1fr;
+        }
+
+        .full-width {
+          grid-column: auto;
+        }
+      }
+    </style>
+  </head>
+  <body class="workspace-page">
+    <script>
+      if (sessionStorage.getItem("eventKakiDemoLoggedIn") !== "true") {
+        window.location.replace("./login.html");
+      }
+    </script>
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Crew workspace</div>
+        <nav class="workspace-nav" aria-label="Crew navigation">
+          <a href="./index.html">Overview</a>
+          <a href="./checkin.html">Check In/Out</a>
+          <a href="./jobs.html">Find Jobs</a>
+          <a href="./job-history.html">Job History</a>
+          <a href="./my-schedule.html">My Schedule</a>
+          <a class="active" href="./my-profile.html">My Profile</a>
+          <a href="./my-wallet.html">My Wallet</a>
+          <a href="./login.html" onclick="sessionStorage.removeItem('eventKakiDemoLoggedIn')">Sign out</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline"><span>Workspace / My Profile</span><span class="workspace-account" id="current-account">Loading...</span></div>
+    <main class="profile">
+      <header class="profile-header">
+        <div>
+          <div class="brand">Event Kaki</div>
+          <h1>My Profile</h1>
+        </div>
+        <a href="./my-schedule.html">My Schedule</a>
+      </header>
+
+      <div class="notice" id="profile-notice">
+        <span id="profile-notice-text">Locked fields can be changed after admin verification.</span>
+        <button class="notice-action" id="request-edit-button" type="button">Request edit</button>
+      </div>
+
+      <form id="profile-form" novalidate>
+        <section class="profile-section">
+          <h2>Personal Details</h2>
+          <div class="profile-photo">
+            <img class="profile-photo-preview" id="profile-photo-preview" alt="Profile photo preview" />
+            <div class="profile-photo-locked"><strong>Live profile picture · Locked</strong>Captured during registration. This photo cannot be replaced.</div>
+          </div>
+          <div class="profile-form">
+            <label class="locked-label">
+              Full Name <span class="locked-badge">LOCKED</span>
+              <input id="profile-full-name" value="" disabled data-locked-field data-request-field />
+            </label>
+            <label class="locked-label">
+              Document Type <span class="locked-badge">LOCKED</span>
+              <select id="profile-document-type" disabled data-locked-field data-request-field>
+                <option value="">— Select —</option>
+                <option value="MyKad">MyKad</option>
+                <option value="Passport">Passport</option>
+              </select>
+            </label>
+            <label class="locked-label">
+              <span id="profile-document-label">MyKad / Passport Number</span> <span class="locked-badge">LOCKED</span>
+              <input id="profile-document-number" value="" disabled data-locked-field data-request-field />
+            </label>
+            <label class="locked-label">
+              Registered Email <span class="locked-badge">LOCKED</span>
+              <input id="profile-email" value="" disabled data-locked-field data-request-field />
+            </label>
+            <label class="locked-label">
+              Contact Number <span class="locked-badge">LOCKED</span>
+              <input id="profile-phone" value="" disabled data-locked-field data-request-field />
+            </label>
+            <label>
+              Gender
+              <select id="profile-gender" disabled data-request-field>
+                <option value="">— Select —</option>
+                <option>Male</option>
+                <option>Female</option>
+              </select>
+            </label>
+            <label>
+              Religion *
+              <select required>
+                <option value="">— Select —</option>
+                <option>Islam</option>
+                <option>Buddhism</option>
+                <option>Christianity</option>
+                <option>Hinduism</option>
+                <option>Sikhism</option>
+                <option>Others</option>
+              </select>
+            </label>
+            <label>
+              Dietary Requirement *
+              <select required>
+                <option value="">— Select —</option>
+                <option>NON-VEGETARIAN 荤食者</option>
+                <option>VEGETARIAN 素食者</option>
+                <option>HALAL 清真</option>
+              </select>
+            </label>
+            <label>
+              Current Address
+              <input id="profile-address" placeholder="Address provided during registration" disabled data-request-field />
+            </label>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <h2>Physical Details</h2>
+          <div class="profile-form">
+            <label>
+              T-Shirt Size *
+              <select required>
+                <option value="">— Select —</option>
+                <option>XS</option>
+                <option>S</option>
+                <option>M</option>
+                <option>L</option>
+                <option>XL</option>
+                <option>2XL</option>
+                <option>3XL</option>
+              </select>
+            </label>
+            <label>
+              Height (cm) *
+              <input type="number" min="1" required />
+            </label>
+            <label>
+              Weight (kg) *
+              <input type="number" min="1" required />
+            </label>
+          </div>
+        </section>
+
+        <section class="profile-section">
+          <h2>Experience</h2>
+          <div class="profile-form">
+            <label class="full-width">
+              Crew Experience *
+              <textarea placeholder="Tell us about your event crew experience" required></textarea>
+            </label>
+            <div class="full-width notice" style="margin-top: 0; border-color: rgb(250 204 21 / 28%); background: rgb(250 204 21 / 6%); color: var(--muted);">
+              Specialized position is optional and not required for profile completion.
+            </div>
+          </div>
+        </section>
+
+        <div class="profile-actions">
+          <button class="primary" type="submit">Save Profile</button>
+          <a href="./jobs.html">Back to Jobs</a>
+        </div>
+      </form>
+    </main>
+      </div>
+    </div>
+    <script>
+      const employeeId = sessionStorage.getItem("eventKakiEmployeeId");
+      const role = sessionStorage.getItem("eventKakiRole");
+      const profileNoticeText = document.getElementById("profile-notice-text");
+      const requestEditButton = document.getElementById("request-edit-button");
+      const lockedFields = document.querySelectorAll("[data-locked-field]");
+      const profilePhotoPreview = document.getElementById("profile-photo-preview");
+      const profileToken = sessionStorage.getItem("eventKakiAuthToken") || "";
+      const requestFields = document.querySelectorAll("[data-request-field]");
+      const saveProfileButton = document.querySelector('#profile-form button[type="submit"]');
+      const profileDocumentType = document.getElementById("profile-document-type");
+      const profileDocumentNumber = document.getElementById("profile-document-number");
+      const updateDocumentNumberLabel = () => {
+        const isPassport = profileDocumentType.value === "Passport";
+        document.getElementById("profile-document-label").textContent =
+          isPassport ? "Passport Number" : "MyKad Number";
+        profileDocumentNumber.placeholder = isPassport ? "e.g. A1234567" : "YYMMDD-PB-####";
+      };
+      let canRequestProfileChanges = false;
+      profileDocumentType.addEventListener("change", updateDocumentNumberLabel);
+      if (!employeeId || !role) {
+        window.location.replace("./login.html");
+      } else {
+        document.getElementById("current-account").textContent =
+          role === "supervisor" ? `Supervisor · ${employeeId}` : `${employeeId} · EPF deducted`;
+
+        fetch("/api/profile", { headers: { "X-Auth-Token": profileToken } })
+          .then(async response => {
+            const data = await response.json();
+            if (!response.ok) throw new Error(data.message || "Unable to load profile");
+            const profile = data.profile;
+            document.getElementById("profile-full-name").value = profile.fullName || "";
+            document.getElementById("profile-document-type").value = profile.documentType || "";
+            updateDocumentNumberLabel();
+            document.getElementById("profile-document-number").value = profile.documentNumber || "";
+            document.getElementById("profile-email").value = profile.email || "";
+            document.getElementById("profile-phone").value = profile.phone || "";
+            document.getElementById("profile-gender").value = profile.gender || "";
+            document.getElementById("profile-address").value = profile.currentAddress || "";
+            if (profile.profilePhoto) profilePhotoPreview.src = profile.profilePhoto;
+            else profilePhotoPreview.hidden = true;
+            if (profile.latestChangeRequestStatus === "Pending") {
+              canRequestProfileChanges = false;
+              profileNoticeText.textContent = "Your profile change request is waiting for supervisor review.";
+              requestEditButton.remove();
+            }
+          })
+          .catch(error => {
+            profileNoticeText.textContent = error.message;
+          });
+
+        if (role === "supervisor") {
+          lockedFields.forEach((field) => {
+            field.disabled = false;
+          });
+          document.querySelectorAll(".locked-badge").forEach((badge) => {
+            badge.textContent = "EDITABLE";
+          });
+          document.querySelectorAll(".locked-label").forEach((label) => {
+            label.classList.remove("locked-label");
+          });
+          requestEditButton.remove();
+        } else {
+          canRequestProfileChanges = true;
+          requestEditButton.addEventListener("click", () => {
+            if (!canRequestProfileChanges) return;
+            requestFields.forEach(field => { field.disabled = false; });
+            document.querySelectorAll(".locked-badge").forEach(badge => {
+              badge.textContent = "EDIT REQUEST";
+            });
+            document.querySelectorAll(".locked-label").forEach(label => {
+              label.classList.remove("locked-label");
+            });
+            requestEditButton.remove();
+            saveProfileButton.textContent = "Submit change request";
+            profileNoticeText.textContent = "Update the fields below and submit them for Supervisor review. Your profile changes after approval.";
+          });
+        }
+      }
+
+      document.getElementById("profile-form").addEventListener("submit", async (event) => {
+        event.preventDefault();
+        if (role !== "crew" || !Array.from(requestFields).some(field => !field.disabled)) return;
+        saveProfileButton.disabled = true;
+        try {
+          const response = await fetch("/api/profile/change-requests", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", "X-Auth-Token": profileToken },
+            body: JSON.stringify({
+              name: document.getElementById("profile-full-name").value,
+              documentType: document.getElementById("profile-document-type").value,
+              documentNumber: document.getElementById("profile-document-number").value,
+              email: document.getElementById("profile-email").value,
+              phone: document.getElementById("profile-phone").value,
+              gender: document.getElementById("profile-gender").value,
+              currentAddress: document.getElementById("profile-address").value
+            })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Unable to submit profile change request");
+          requestFields.forEach(field => { field.disabled = true; });
+          saveProfileButton.textContent = "Request submitted";
+          profileNoticeText.textContent = "Your profile change request has been sent to the Supervisor for review.";
+        } catch (error) {
+          profileNoticeText.textContent = error.message;
+        } finally {
+          saveProfileButton.disabled = false;
+        }
+      });
+    </script>
+  </body>
+</html>

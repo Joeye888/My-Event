@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log in | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+  </head>
+  <body class="workspace-page auth-page">
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Account access</div>
+        <p class="auth-sidebar-copy">Log in to access your crew workspace.</p>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline"><span>Workspace / Log in</span><span class="workspace-account">Secure access</span></div>
+    <main class="auth-layout">
+      <section class="auth-showcase">
+        <a class="brand" href="./index.html">Event Kaki</a>
+        <div class="showcase-copy">
+          <h1>Find Jobs. Join Events. Earn More</h1>
+          <p>Join the Event Kaki crew network. Apply to jobs, build your profile, and check in with a single QR code.</p>
+          <ul>
+            <li>Browse and apply to upcoming events</li>
+            <li>Track approvals and your shift status</li>
+            <li>Show your QR pass at the venue</li>
+          </ul>
+        </div>
+        <div class="location-tag">KLCC · Kuala Lumpur · Malaysia</div>
+      </section>
+      <section class="auth-panel">
+        <div class="auth-language"><span class="active">English</span><span>Bahasa Malaysia</span><span>中文</span></div>
+        <h2>Log in</h2>
+        <p class="intro">Welcome back, crew member.</p>
+        <div class="auth-info">Use the Employee ID and password you received or created during registration.</div>
+        <form class="auth-form" id="login-form">
+          <label>
+            Employee ID
+            <input
+              type="text"
+              name="employeeId"
+              placeholder="e.g. N000001"
+              inputmode="text"
+              autocomplete="username"
+              pattern="[NBS][A-Za-z0-9]+"
+              title="Enter an employee ID beginning with N, B, or S"
+              required
+            />
+          </label>
+          <label>
+            Password
+            <input type="password" name="password" placeholder="Enter your password" required />
+          </label>
+          <div class="demo-account">
+            <strong>Demo account</strong>
+            <span>Employee ID: N000001 (EPF deducted)</span>
+            <span>Demo password: 990101-14-0001</span>
+            <button class="demo-fill" type="button" id="demo-fill">Use demo account</button>
+            <strong class="supervisor-demo-title">Supervisor demo</strong>
+            <span>Employee ID: S000001</span>
+            <span>Password: Supervisor@123</span>
+            <button class="demo-fill" type="button" id="supervisor-fill">Use supervisor account</button>
+          </div>
+          <div class="form-row">
+            <label><input type="checkbox" name="remember" /> Remember me</label>
+            <a class="text-link" href="#">Forgot password?</a>
+          </div>
+          <div class="notice" id="login-notice" style="display: none;"></div>
+          <button class="submit-button" type="submit">Log in</button>
+        </form>
+        <p class="switch-auth">New to Event Kaki? <a class="text-link" href="./register.html">Create an account</a></p>
+      </section>
+    </main>
+      </div>
+    </div>
+    <script>
+      const demoEmployeeId = "N000001";
+      const loginForm = document.getElementById("login-form");
+      const notice = document.getElementById("login-notice");
+
+      document.getElementById("demo-fill").addEventListener("click", () => {
+        loginForm.employeeId.value = "N000001";
+        loginForm.password.value = "990101-14-0001";
+      });
+
+      document.getElementById("supervisor-fill").addEventListener("click", () => {
+        loginForm.employeeId.value = "S000001";
+        loginForm.password.value = "Supervisor@123";
+      });
+
+      loginForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const employeeId = loginForm.employeeId.value.trim().toUpperCase();
+        const password = loginForm.password.value;
+
+        try {
+          const apiBase = window.location.protocol === "file:"
+            ? "http://localhost:3000/api"
+            : `${window.location.origin}/api`;
+          const response = await fetch(`${apiBase}/auth/login`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ employeeId, password })
+          });
+          const account = await response.json();
+          if (!response.ok) {
+            throw new Error(account.message || "Login failed");
+          }
+
+          sessionStorage.clear();
+          sessionStorage.setItem("eventKakiDemoLoggedIn", "true");
+          sessionStorage.setItem("eventKakiEmployeeId", account.employeeId);
+          sessionStorage.setItem("eventKakiRole", account.role);
+          sessionStorage.setItem("eventKakiUserName", account.name);
+          sessionStorage.setItem("eventKakiAuthToken", account.token);
+          window.location.href = account.role === "supervisor" ? "./admin-dashboard.html" : "./index.html";
+        } catch (error) {
+          notice.textContent = error.name === "TypeError"
+            ? "无法连接到服务器。请先在项目文件夹运行 npm install，然后运行 npm start，再重新打开登录页面。"
+            : error.message;
+          notice.classList.add("error");
+          notice.style.display = "block";
+        }
+      });
+    </script>
+  </body>
+</html>

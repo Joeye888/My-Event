@@ -1,0 +1,414 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Create your account | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <style>
+      .register-layout { display: block; max-width: 900px; min-height: 100vh; border: 0; }
+      .register-panel { min-height: 100vh; justify-content: flex-start; padding: 34px clamp(22px, 6vw, 72px) 50px; background: transparent; }
+      .register-brand { align-self: flex-start; margin-bottom: 32px; color: var(--yellow); text-decoration: none; }
+      .register-panel .auth-language { display: flex; gap: 4px; margin-bottom: 26px; }
+      .language-option { border: 0; border-radius: 999px; padding: 7px 10px; color: var(--muted); background: transparent; cursor: pointer; font: inherit; font-size: .72rem; }
+      .language-option.active { color: #111; background: var(--yellow); font-weight: 700; }
+      .register-panel > h2, .register-panel > .intro { text-align: left; }
+      .register-panel > h2 { color: var(--yellow); }
+      .register-panel > .intro { margin-bottom: 18px; }
+      .register-info { margin-bottom: 20px; text-align: left; }
+      .register-form { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 15px 16px; }
+      .register-form .full-width { grid-column: 1 / -1; }
+      .register-form input, .register-form select { min-height: 46px; }
+      .register-form input[type="file"] { padding: 9px; font-size: .82rem; }
+      .field-hint { margin: -3px 0 0; color: #94a3b8; font-size: .75rem; font-weight: normal; line-height: 1.45; }
+      .document-box { width: min(100%, 460px); aspect-ratio: 85.6 / 53.98; display: grid; place-items: center; overflow: hidden; border: 1px dashed #686172; border-radius: 10px; color: var(--muted); background: #111018; }
+      .document-box.passport { aspect-ratio: 125 / 88; }
+      .document-box img { width: 100%; height: 100%; object-fit: contain; }
+      .document-box-caption { padding: 12px; text-align: center; font-size: .8rem; }
+      .capture-box { display: grid; grid-template-columns: minmax(150px, 210px) 1fr; gap: 18px; align-items: center; border: 1px solid #373242; border-radius: 12px; padding: 16px; background: #111018; }
+      .capture-preview { display: block; width: 100%; aspect-ratio: 7 / 9; border: 1px solid #413c4c; border-radius: 10px; object-fit: cover; background: #09090b; }
+      [hidden] { display: none !important; }
+      .capture-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+      .capture-actions button { border: 1px solid var(--yellow); border-radius: 8px; padding: 10px 13px; color: var(--yellow); background: transparent; cursor: pointer; font: inherit; font-weight: 700; }
+      .capture-actions button.primary { color: #111; background: var(--yellow); }
+      .capture-actions button:disabled { cursor: not-allowed; opacity: .5; }
+      .capture-help { margin: 0 0 12px; color: var(--muted); font-size: .82rem; line-height: 1.45; }
+      .capture-status { min-height: 1.2em; margin: 10px 0 0; color: var(--muted); font-size: .78rem; }
+      .register-form .submit-button { grid-column: 1 / -1; margin-top: 2px; }
+      .register-switch { margin-top: 18px; }
+      @media (max-width: 720px) {
+        .register-panel { padding: 34px 22px 42px; }
+        .register-form { grid-template-columns: 1fr; }
+        .register-form .full-width, .register-form .submit-button { grid-column: auto; }
+        .capture-box { grid-template-columns: 1fr; }
+        .capture-preview { max-width: 210px; }
+      }
+    </style>
+  </head>
+  <body class="workspace-page auth-page">
+    <main class="auth-layout register-layout">
+      <section class="auth-panel register-panel">
+        <a class="brand register-brand" href="./login.html">Event Kaki</a>
+        <div class="auth-language" aria-label="Available languages">
+          <button type="button" class="language-option active" data-language="en" aria-pressed="true">English</button>
+          <button type="button" class="language-option" data-language="ms" aria-pressed="false">Bahasa Malaysia</button>
+          <button type="button" class="language-option" data-language="zh" aria-pressed="false">中文</button>
+        </div>
+        <h2 id="form-title">Create your account</h2>
+        <p class="intro" id="form-intro">Enter your details as shown on your identity document.</p>
+        <div class="auth-info register-info" id="document-info">Your identity document is used for account verification. PDF, JPG or PNG files up to 8 MB are accepted.</div>
+        <form class="auth-form register-form" id="register-form">
+          <label>
+            <span>Full Name (As Per IC) *</span>
+            <input type="text" name="fullName" autocomplete="name" maxlength="120" required />
+          </label>
+          <label>
+            <span id="phone-label">Phone Number *</span>
+            <input type="tel" name="phone" autocomplete="tel" placeholder="+60 12-345 6789" maxlength="30" required />
+          </label>
+          <label class="full-width">
+            <span id="email-label">Email Address *</span>
+            <input type="email" name="email" autocomplete="email" placeholder="you@example.com" maxlength="254" required />
+          </label>
+          <label>
+            <span id="document-type-label">Document Type *</span>
+            <select name="documentType" id="document-type" required>
+              <option value="" id="document-type-placeholder">Select document type</option>
+              <option value="MyKad">MyKad</option>
+              <option value="Passport">Passport</option>
+            </select>
+          </label>
+          <label>
+            <span id="document-number-label">MyKad number *</span>
+            <input type="text" name="documentNumber" id="document-number" autocomplete="off" maxlength="14" placeholder="e.g. 900101-14-1234" pattern="[0-9]{6}-[0-9]{2}-[0-9]{4}" title="Enter a valid MyKad number in YYMMDD-PB-#### format" required />
+            <span class="field-hint" id="document-number-hint">Format: YYMMDD-PB-#### (12 digits).</span>
+            <details class="field-hint" id="mykad-explanation">
+              <summary>MyKad number format</summary>
+              YYMMDD is the date of birth; PB is the place-of-birth code; the final four digits are system-generated by JPN and should not be used to infer gender.
+            </details>
+          </label>
+          <label class="full-width">
+            <span id="identity-document-label">Identity Document *</span>
+            <input type="file" name="document" id="identity-document" accept=".pdf,.jpg,.jpeg,.png,application/pdf,image/jpeg,image/png" required />
+            <span class="field-hint" id="document-hint">Choose a clear image or PDF (maximum 8 MB).</span>
+            <div class="document-box" id="document-box">
+              <div class="document-box-caption" id="document-box-caption">MyKad card format · 85.60 × 53.98 mm</div>
+            </div>
+          </label>
+          <div class="full-width">
+            <label for="camera-preview" id="profile-picture-label">Profile Picture *</label>
+            <div class="capture-box">
+              <video class="capture-preview" id="camera-preview" autoplay muted playsinline aria-label="Live camera preview"></video>
+              <img class="capture-preview" id="captured-photo" alt="Captured profile picture preview" hidden />
+              <div>
+                <p class="capture-help" id="capture-help">Capture a passport-style portrait (35 × 45 mm): plain shadowless background, neutral expression, mouth closed, eyes open, dark non-uniform clothing, shoulders and neck visible. Avoid contact lenses and glare on glasses.</p>
+                <div class="capture-actions">
+                  <button type="button" id="start-camera">Start camera</button>
+                  <button type="button" class="primary" id="capture-photo" disabled>Capture photo</button>
+                  <button type="button" id="retake-photo" hidden>Retake photo</button>
+                </div>
+                <p class="capture-status" id="camera-status" aria-live="polite">A profile photo is required. You may retake it before registration if there is glare.</p>
+              </div>
+            </div>
+          </div>
+          <label class="full-width">
+            <span id="address-label">Current Address *</span>
+            <input type="text" name="currentAddress" autocomplete="street-address" maxlength="300" required />
+          </label>
+          <label>
+            <span id="gender-label">Gender *</span>
+            <select name="gender" required>
+              <option value="" id="gender-placeholder">Select gender</option>
+              <option value="Male">Male</option>
+              <option value="Female">Female</option>
+            </select>
+          </label>
+          <label>
+            <span id="password-label">Create Password *</span>
+            <input type="password" name="password" autocomplete="new-password" minlength="8" placeholder="At least 8 characters" required />
+          </label>
+          <div class="notice full-width" id="register-notice" role="status" aria-live="polite"></div>
+          <button class="submit-button" id="register-submit" type="submit">Create account</button>
+        </form>
+        <p class="switch-auth register-switch">Already have an account? <a class="text-link" href="./login.html">Log in</a></p>
+      </section>
+    </main>
+    <script>
+      const registerForm = document.getElementById("register-form");
+      const registerNotice = document.getElementById("register-notice");
+      const documentInput = document.getElementById("identity-document");
+      const documentHint = document.getElementById("document-hint");
+      const documentType = document.getElementById("document-type");
+      const documentNumber = document.getElementById("document-number");
+      const submitButton = document.getElementById("register-submit");
+      const cameraPreview = document.getElementById("camera-preview");
+      const capturedPhoto = document.getElementById("captured-photo");
+      const startCameraButton = document.getElementById("start-camera");
+      const capturePhotoButton = document.getElementById("capture-photo");
+      const cameraStatus = document.getElementById("camera-status");
+      const documentBox = document.getElementById("document-box");
+      const documentBoxCaption = document.getElementById("document-box-caption");
+      const languageOptions = document.querySelectorAll(".language-option");
+      let cameraStream = null;
+      let profilePhotoData = "";
+      let documentPreviewUrl = null;
+      let activeLanguage = "en";
+
+      documentType.addEventListener("change", () => {
+        const isMyKad = documentType.value === "MyKad";
+        document.getElementById("document-number-label").textContent = isMyKad ? "MyKad number *" : "Passport Number *";
+        documentNumber.placeholder = isMyKad ? "e.g. 900101-14-1234" : "e.g. A12345678";
+        documentNumber.inputMode = documentType.value === "MyKad" ? "numeric" : "text";
+        documentNumber.maxLength = isMyKad ? 14 : 20;
+        documentNumber.pattern = isMyKad ? "[0-9]{6}-[0-9]{2}-[0-9]{4}" : "[A-Za-z0-9]{5,20}";
+        documentNumber.title = isMyKad
+          ? "Enter a valid MyKad number in YYMMDD-PB-#### format"
+          : "Enter a passport number using 5 to 20 letters or numbers";
+        document.getElementById("document-number-hint").textContent = isMyKad
+          ? "12 digits in YYMMDD-PB-#### format; YYMMDD must be a valid date."
+          : "Enter 5 to 20 letters or numbers.";
+        document.getElementById("mykad-explanation").hidden = !isMyKad;
+        documentBox.classList.toggle("passport", !isMyKad);
+        documentBoxCaption.textContent = isMyKad
+          ? "MyKad card format · 85.60 × 53.98 mm"
+          : "Passport document format · 125 × 88 mm";
+      });
+
+      documentNumber.addEventListener("input", () => {
+        if (documentType.value !== "MyKad") {
+          documentNumber.value = documentNumber.value.toUpperCase().replace(/[^A-Z0-9]/g, "");
+          return;
+        }
+        const digits = documentNumber.value.replace(/\D/g, "").slice(0, 12);
+        documentNumber.value = digits.length > 8
+          ? `${digits.slice(0, 6)}-${digits.slice(6, 8)}-${digits.slice(8)}`
+          : digits.length > 6 ? `${digits.slice(0, 6)}-${digits.slice(6)}` : digits;
+      });
+
+      documentInput.addEventListener("change", () => {
+        const file = documentInput.files[0];
+        if (!file) return;
+        if (documentPreviewUrl) URL.revokeObjectURL(documentPreviewUrl);
+        documentBox.innerHTML = "";
+        if (file.type.startsWith("image/")) {
+          documentPreviewUrl = URL.createObjectURL(file);
+          const preview = document.createElement("img");
+          preview.src = documentPreviewUrl;
+          preview.alt = "Selected identity document preview";
+          documentBox.appendChild(preview);
+        } else {
+          const caption = document.createElement("div");
+          caption.className = "document-box-caption";
+          caption.textContent = `PDF selected: ${file.name}`;
+          documentBox.appendChild(caption);
+        }
+        documentHint.textContent = file.size > 8 * 1024 * 1024
+          ? "This file is too large. Choose a file no larger than 8 MB."
+          : `Selected: ${file.name}`;
+      });
+
+      const languageCopy = {
+        en: {
+          title: "Create your account",
+          intro: "Enter your details as shown on your identity document.",
+          documentInfo: "Your identity document is used for account verification. PDF, JPG or PNG files up to 8 MB are accepted.",
+          phone: "Phone Number *", email: "Email Address *", documentType: "Document Type *",
+          identityDocument: "Identity Document *", documentHint: "Choose a clear image or PDF (maximum 8 MB).",
+          profilePicture: "Profile Picture *", address: "Current Address *", gender: "Gender *",
+          password: "Create Password *", submit: "Create account", login: "Already have an account?",
+          introHelp: "Capture a passport-style portrait (35 × 45 mm): plain shadowless background, neutral expression, mouth closed, eyes open, dark non-uniform clothing, shoulders and neck visible. Avoid contact lenses and glare on glasses.",
+          startCamera: "Start camera", capture: "Capture photo", retake: "Retake photo"
+        },
+        ms: {
+          title: "Create your account",
+          intro: "Masukkan maklumat seperti yang tertera pada dokumen pengenalan anda.",
+          documentInfo: "Dokumen pengenalan digunakan untuk pengesahan akaun. PDF, JPG atau PNG sehingga 8 MB diterima.",
+          phone: "Nombor Telefon *", email: "Alamat E-mel *", documentType: "Jenis Dokumen *",
+          identityDocument: "Dokumen Pengenalan *", documentHint: "Pilih imej yang jelas atau PDF (maksimum 8 MB).",
+          profilePicture: "Gambar Profil *", address: "Alamat Semasa *", gender: "Jantina *",
+          password: "Cipta Kata Laluan *", submit: "Create account", login: "Sudah mempunyai akaun?",
+          introHelp: "Ambil potret gaya pasport (35 × 45 mm): latar belakang kosong tanpa bayang, ekspresi neutral, mulut tertutup, mata terbuka, pakaian gelap bukan seragam, bahu dan leher kelihatan. Elakkan kanta lekap dan silau pada cermin mata.",
+          startCamera: "Mulakan kamera", capture: "Ambil gambar", retake: "Ambil semula"
+        },
+        zh: {
+          title: "Create your account",
+          intro: "请按照身份证件上的资料填写。",
+          documentInfo: "身份证件用于账号验证。接受不超过 8 MB 的 PDF、JPG 或 PNG 文件。",
+          phone: "电话号码 *", email: "电子邮箱 *", documentType: "证件类型 *",
+          identityDocument: "身份证明文件 *", documentHint: "请选择清晰的图片或 PDF（最大 8 MB）。",
+          profilePicture: "个人照片 *", address: "目前地址 *", gender: "性别 *",
+          password: "创建密码 *", submit: "Create account", login: "已经有账号？",
+          introHelp: "请拍摄护照规格照片（35 × 45 毫米）：纯色无阴影背景、表情自然、闭嘴睁眼、穿深色非制服衣服，并露出肩膀和颈部。请勿佩戴隐形眼镜；眼镜如有反光，请重新拍摄。",
+          startCamera: "启动相机", capture: "拍摄照片", retake: "重新拍摄"
+        }
+      };
+
+      function setLanguage(language) {
+        activeLanguage = language;
+        document.documentElement.lang = language === "ms" ? "ms" : language;
+        const copy = languageCopy[language];
+        document.getElementById("form-title").textContent = copy.title;
+        document.getElementById("form-intro").textContent = copy.intro;
+        document.getElementById("document-info").textContent = copy.documentInfo;
+        document.getElementById("phone-label").textContent = copy.phone;
+        document.getElementById("email-label").textContent = copy.email;
+        document.getElementById("document-type-label").textContent = copy.documentType;
+        document.getElementById("identity-document-label").textContent = copy.identityDocument;
+        documentHint.textContent = copy.documentHint;
+        document.getElementById("profile-picture-label").textContent = copy.profilePicture;
+        document.getElementById("address-label").textContent = copy.address;
+        document.getElementById("gender-label").textContent = copy.gender;
+        document.getElementById("password-label").textContent = copy.password;
+        document.getElementById("capture-help").textContent = copy.introHelp;
+        startCameraButton.textContent = copy.startCamera;
+        capturePhotoButton.textContent = copy.capture;
+        document.getElementById("retake-photo").textContent = copy.retake;
+        submitButton.textContent = copy.submit;
+        document.querySelector(".register-switch").firstChild.textContent = copy.login + " ";
+        languageOptions.forEach(option => {
+          const active = option.dataset.language === language;
+          option.classList.toggle("active", active);
+          option.setAttribute("aria-pressed", String(active));
+        });
+      }
+
+      languageOptions.forEach(option => option.addEventListener("click", () => setLanguage(option.dataset.language)));
+
+      function readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.addEventListener("load", () => resolve(reader.result));
+          reader.addEventListener("error", () => reject(new Error("Unable to read the selected document")));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      startCameraButton.addEventListener("click", async () => {
+        if (profilePhotoData) return;
+        if (!navigator.mediaDevices?.getUserMedia) {
+          cameraStatus.textContent = "Camera capture is not available in this browser. Open this page on localhost or HTTPS with camera access.";
+          return;
+        }
+        try {
+          cameraStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" }, audio: false });
+          cameraPreview.srcObject = cameraStream;
+          capturePhotoButton.disabled = false;
+          cameraStatus.textContent = "Camera is ready. Capture your profile photo when ready.";
+        } catch (error) {
+          cameraStatus.textContent = `Unable to access camera: ${error.message}`;
+        }
+      });
+
+      document.getElementById("retake-photo").addEventListener("click", () => {
+        profilePhotoData = "";
+        capturedPhoto.hidden = true;
+        cameraPreview.hidden = false;
+        capturePhotoButton.disabled = true;
+        startCameraButton.disabled = false;
+        document.getElementById("retake-photo").hidden = true;
+        cameraStatus.textContent = "Capture a new portrait. The final photo cannot be replaced after account creation.";
+      });
+
+      capturePhotoButton.addEventListener("click", () => {
+        if (!cameraStream || profilePhotoData || !cameraPreview.videoWidth) return;
+        const canvas = document.createElement("canvas");
+        const width = 700;
+        const height = 900;
+        const targetRatio = width / height;
+        const sourceRatio = cameraPreview.videoWidth / cameraPreview.videoHeight;
+        const sourceWidth = sourceRatio > targetRatio ? cameraPreview.videoHeight * targetRatio : cameraPreview.videoWidth;
+        const sourceHeight = sourceRatio > targetRatio ? cameraPreview.videoHeight : cameraPreview.videoWidth / targetRatio;
+        const sourceX = (cameraPreview.videoWidth - sourceWidth) / 2;
+        const sourceY = (cameraPreview.videoHeight - sourceHeight) / 2;
+        canvas.width = width;
+        canvas.height = height;
+        canvas.getContext("2d").drawImage(cameraPreview, sourceX, sourceY, sourceWidth, sourceHeight, 0, 0, width, height);
+        profilePhotoData = canvas.toDataURL("image/jpeg", 0.82);
+        capturedPhoto.src = profilePhotoData;
+        capturedPhoto.hidden = false;
+        cameraPreview.hidden = true;
+        capturePhotoButton.disabled = true;
+        startCameraButton.disabled = true;
+        document.getElementById("retake-photo").hidden = false;
+        cameraStatus.textContent = "Portrait captured at 35 × 45 mm proportions. Retake before registration if glasses have glare.";
+        cameraStream.getTracks().forEach(track => track.stop());
+        cameraStream = null;
+      });
+
+      registerForm.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        registerNotice.classList.remove("error");
+        registerNotice.style.display = "none";
+
+        const file = documentInput.files[0];
+        if (!profilePhotoData) {
+          registerNotice.textContent = "Please capture your live profile photo before creating an account.";
+          registerNotice.classList.add("error");
+          registerNotice.style.display = "block";
+          return;
+        }
+        if (!file) {
+          registerNotice.textContent = "Please upload your MyKad or passport document.";
+          registerNotice.classList.add("error");
+          registerNotice.style.display = "block";
+          return;
+        }
+        if (file.size > 8 * 1024 * 1024) {
+          registerNotice.textContent = "The ID document must be no larger than 8 MB.";
+          registerNotice.classList.add("error");
+          registerNotice.style.display = "block";
+          return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.textContent = "Creating account...";
+        try {
+          const documentData = await readFileAsDataUrl(file);
+          const response = await fetch("/api/auth/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              fullName: registerForm.elements.fullName.value,
+              phone: registerForm.elements.phone.value,
+              email: registerForm.elements.email.value,
+              documentType: registerForm.elements.documentType.value,
+              documentNumber: registerForm.elements.documentNumber.value,
+              documentName: file.name,
+              documentData,
+              profilePhotoData,
+              currentAddress: registerForm.elements.currentAddress.value,
+              gender: registerForm.elements.gender.value,
+              password: registerForm.elements.password.value
+            })
+          });
+
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Unable to create your account");
+
+          sessionStorage.clear();
+          sessionStorage.setItem("eventKakiDemoLoggedIn", "true");
+          sessionStorage.setItem("eventKakiEmployeeId", data.employeeId);
+          sessionStorage.setItem("eventKakiRole", data.role);
+          sessionStorage.setItem("eventKakiUserName", data.name);
+          sessionStorage.setItem("eventKakiAuthToken", data.token);
+          registerNotice.textContent = `Account created. Your Crew ID is ${data.employeeId}. Redirecting to your workspace...`;
+          registerNotice.style.display = "block";
+          window.setTimeout(() => window.location.replace("./index.html"), 1200);
+        } catch (error) {
+          registerNotice.textContent = error.message || "Unable to create your account";
+          registerNotice.classList.add("error");
+          registerNotice.style.display = "block";
+          submitButton.disabled = false;
+          submitButton.textContent = languageCopy[activeLanguage].submit;
+        }
+      });
+
+      setLanguage("en");
+      window.addEventListener("pagehide", () => {
+        if (cameraStream) cameraStream.getTracks().forEach(track => track.stop());
+        if (documentPreviewUrl) URL.revokeObjectURL(documentPreviewUrl);
+      });
+    </script>
+  </body>
+</html>

@@ -1,0 +1,216 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Post Job | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <link rel="stylesheet" href="./admin-dashboard.css" />
+    <style>
+      .post-job-container { max-width: 820px; }
+      .post-job-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 18px; padding: 28px; }
+      .post-job-form { display: grid; gap: 18px; }
+      .post-job-form label { display: grid; gap: 7px; font-weight: 600; color: #344054; }
+      .post-job-form input, .post-job-form textarea { border: 1px solid #d0d5dd; border-radius: 9px; padding: 11px 12px; font: inherit; }
+      .post-job-form textarea { min-height: 90px; resize: vertical; }
+      .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      .post-job-button { width: fit-content; border: 0; border-radius: 9px; padding: 12px 20px; background: #166534; color: #fff; font-weight: 700; cursor: pointer; }
+      .post-job-notice { display: none; border-radius: 9px; padding: 12px; }
+      .post-job-notice.success { display: block; background: #dcfce7; color: #166534; }
+      .post-job-notice.error { display: block; background: #fee2e2; color: #991b1b; }
+      .posted-jobs { margin-top: 24px; display: grid; gap: 10px; }
+      .posted-job { display: flex; justify-content: space-between; align-items: center; gap: 16px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 12px; background: #fff; }
+      .posted-job h2 { margin: 0 0 5px; font-size: 1rem; color: #101828; }
+      .posted-job p { margin: 0; color: #667085; font-size: .86rem; }
+      .cancel-job { border: 1px solid #b42318; border-radius: 8px; padding: 9px 12px; color: #b42318; background: #fff; font: inherit; cursor: pointer; white-space: nowrap; }
+      .posted-empty { color: #667085; }
+      @media (max-width: 640px) { .form-grid { grid-template-columns: 1fr; } }
+    </style>
+  </head>
+  <body class="workspace-page">
+    <script>
+      if (sessionStorage.getItem("eventKakiRole") !== "supervisor") {
+        window.location.replace("./login.html");
+      }
+    </script>
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Administration</div>
+        <nav class="workspace-nav">
+          <a href="./admin-dashboard.html" class="nav-item">Dashboard</a>
+          <a href="./post-job.html" class="nav-item active">Post Job</a>
+          <a href="./login.html" class="nav-item" id="logout-link">Logout</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline">
+          <span>Workspace / Post Job</span>
+          <span class="workspace-account">Supervisor · S000001</span>
+        </div>
+        <main class="admin-container post-job-container">
+          <div class="dashboard-header">
+            <div>
+              <h1>Post a crew job</h1>
+              <p>Publish an open shift for Crew accounts to browse and apply.</p>
+            </div>
+          </div>
+          <section class="post-job-card">
+            <form class="post-job-form" id="post-job-form">
+              <label>Job title
+                <input name="title" placeholder="e.g. Event Registration Crew" required />
+              </label>
+              <div class="form-grid">
+                <label>Job type
+                  <input name="jobType" placeholder="e.g. Setup Crew" required />
+                </label>
+                <label>Location
+                  <input name="location" placeholder="e.g. KLCC, Kuala Lumpur" required />
+                </label>
+                <label>Event date
+                  <input name="dateKey" type="date" required />
+                </label>
+                <label>Call time
+                  <input name="callTime" type="time" required />
+                </label>
+                <label>End time
+                  <input name="endTime" type="time" required />
+                </label>
+                <label>Dress code
+                  <input name="dressCode" placeholder="e.g. Black attire" required />
+                </label>
+                <label>Food provided
+                  <select name="foodProvided" required>
+                    <option value="1">Yes</option>
+                    <option value="0">No</option>
+                  </select>
+                </label>
+                <label>Daily wage (RM)
+                  <input name="wage" type="number" min="0" step="0.01" required />
+                </label>
+                <label>Crew needed (PAX)
+                  <input name="pax" type="number" min="1" step="1" value="1" required />
+                </label>
+                <label>Application deadline
+                  <input name="applicationDeadline" type="datetime-local" />
+                </label>
+              </div>
+              <label>Notes
+                <textarea name="notes" placeholder="Optional extra notes"></textarea>
+              </label>
+              <label>Client notice
+                <textarea name="clientNotice" placeholder="Optional notes for Crew"></textarea>
+              </label>
+              <div class="post-job-notice" id="post-job-notice"></div>
+              <button class="post-job-button" type="submit">Publish job</button>
+            </form>
+          </section>
+          <section class="post-job-card posted-jobs">
+            <h2>Posted jobs</h2>
+            <div id="posted-jobs-list"></div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script>
+      const form = document.getElementById("post-job-form");
+      const notice = document.getElementById("post-job-notice");
+      const dateInput = form.dateKey;
+      const malaysiaDate = () => new Date(Date.now() + 8 * 60 * 60 * 1000).toISOString().slice(0, 10);
+      dateInput.value = malaysiaDate();
+      const postedJobsList = document.getElementById("posted-jobs-list");
+      const apiHeaders = () => ({
+        "Content-Type": "application/json",
+        "X-Auth-Token": sessionStorage.getItem("eventKakiAuthToken") || ""
+      });
+
+      async function renderPostedJobs() {
+        const response = await fetch("/api/jobs", { headers: apiHeaders() });
+        if (!response.ok) throw new Error("Unable to load posted jobs");
+        const data = await response.json();
+        const postedJobs = (data.jobs || []).filter(job => String(job.status || "").toLowerCase() === "open");
+        postedJobsList.innerHTML = postedJobs.length ? postedJobs.map((job) => {
+          const shift = Array.isArray(job.sections) && job.sections[0]?.shifts?.[0];
+          const pax = Number(job.pax || shift?.pax || 0);
+          return `<article class="posted-job"><div><h2>${job.title}</h2><p>${job.date} · ${job.location} · ${pax} PAX · ${job.callTime || shift?.time || "Time TBD"}</p></div><button class="cancel-job" type="button" data-job-id="${job.id}">Cancel job</button></article>`;
+        }).join("") : '<p class="posted-empty">No jobs posted yet.</p>';
+        postedJobsList.querySelectorAll(".cancel-job").forEach((button) => {
+          button.addEventListener("click", async () => {
+            const jobId = button.dataset.jobId;
+            const job = postedJobs.find((item) => String(item.id) === jobId);
+            if (!job || !confirm(`Cancel "${job.title}"? Crew will no longer see this job.`)) return;
+            const response = await fetch(`/api/jobs/${jobId}`, { method: "DELETE", headers: apiHeaders() });
+            if (!response.ok) {
+              const data = await response.json();
+              throw new Error(data.message || "Unable to cancel job");
+            }
+            await renderPostedJobs();
+          });
+        });
+      }
+
+      renderPostedJobs().catch(error => {
+        postedJobsList.innerHTML = `<p class="posted-empty">${error.message}</p>`;
+      });
+
+      document.getElementById("logout-link").addEventListener("click", (event) => {
+        event.preventDefault();
+        sessionStorage.clear();
+        window.location.href = "./login.html";
+      });
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        const data = new FormData(form);
+        const dateKey = data.get("dateKey");
+        const payload = {
+          title: String(data.get("title") || "").trim(),
+          location: String(data.get("location") || "").trim(),
+          date: new Date(`${dateKey}T00:00:00`).toLocaleDateString("en-MY", { day: "numeric", month: "long", year: "numeric" }),
+          dateKey,
+          jobType: String(data.get("jobType") || "").trim(),
+          callTime: String(data.get("callTime") || "").trim(),
+          endTime: String(data.get("endTime") || "").trim(),
+          dressCode: String(data.get("dressCode") || "").trim(),
+          foodProvided: String(data.get("foodProvided") || "0") === "1",
+          wage: Number(data.get("wage") || 0),
+          pax: Number(data.get("pax") || 0),
+          notes: String(data.get("notes") || "").trim(),
+          requirements: [String(data.get("dressCode") || "").trim(), String(data.get("jobType") || "").trim()],
+          clientNotice: String(data.get("clientNotice") || "").trim() || "Please arrive on time and follow the event supervisor instructions.",
+          applicationDeadline: data.get("applicationDeadline") ? new Date(data.get("applicationDeadline")).toISOString() : null,
+          autoCancel: true,
+          sections: [{
+            title: String(data.get("jobType") || "").trim(),
+            shifts: [{ time: String(data.get("callTime") || "").trim(), pax: Number(data.get("pax") || 0) }]
+          }]
+        };
+
+        if (!payload.title || !payload.location || !payload.dateKey || !payload.jobType || !payload.callTime || !payload.endTime || !payload.dressCode || !payload.wage || !payload.pax) {
+          notice.textContent = "Please complete all required fields before publishing the job.";
+          notice.className = "post-job-notice error";
+          return;
+        }
+
+        try {
+          const response = await fetch("/api/jobs", {
+            method: "POST",
+            headers: apiHeaders(),
+            body: JSON.stringify(payload)
+          });
+          const result = await response.json();
+          if (!response.ok) throw new Error(result.message || "Unable to publish job");
+          await renderPostedJobs();
+          form.reset();
+          dateInput.value = malaysiaDate();
+          notice.textContent = "Job published. Crew accounts can now see and apply for it.";
+          notice.className = "post-job-notice success";
+        } catch (error) {
+          notice.textContent = error.message || "Unable to publish this job. Please try again.";
+          notice.className = "post-job-notice error";
+        }
+      });
+    </script>
+  </body>
+</html>

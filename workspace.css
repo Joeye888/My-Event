@@ -1,0 +1,154 @@
+:root {
+  --workspace-bg: #0a0d12;
+  --workspace-panel: #121821;
+  --workspace-line: #273442;
+  --workspace-lime: #facc15;
+  --workspace-text: #f6f8fb;
+  --workspace-muted: #8f9bab;
+}
+
+body.workspace-page {
+  min-height: 100vh;
+  margin: 0;
+  overflow-y: scroll;
+  color: var(--workspace-text);
+  background: var(--workspace-bg);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.workspace-layout {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr);
+  min-height: 100vh;
+  width: 100%;
+}
+
+.workspace-sidebar {
+  border-right: 1px solid var(--workspace-line);
+  padding: 26px 16px;
+  background: #0d1218;
+}
+
+.workspace-logo {
+  margin: 0 10px 34px;
+  color: var(--workspace-lime);
+  font-weight: 900;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.workspace-nav-label {
+  margin: 0 10px 10px;
+  color: #596675;
+  font-size: .68rem;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.workspace-nav {
+  display: grid;
+  gap: 7px;
+}
+
+.workspace-nav a {
+  border-radius: 8px;
+  padding: 12px 10px;
+  color: var(--workspace-muted);
+  font-size: .88rem;
+  text-decoration: none;
+  transition: color .18s ease, background-color .18s ease, transform .18s ease;
+}
+
+.workspace-nav a:hover,
+.workspace-nav a.active {
+  color: #10140b;
+  background: var(--workspace-lime);
+  font-weight: bold;
+}
+
+.workspace-nav a:hover {
+  transform: translateX(2px);
+}
+
+.auth-sidebar-copy {
+  margin: 0 10px;
+  color: var(--workspace-muted);
+  font-size: .78rem;
+  line-height: 1.5;
+}
+
+.workspace-main {
+  width: min(calc(100% - 48px), 1060px);
+  margin: 0 auto;
+  padding: 24px 0 40px;
+  min-width: 0;
+}
+
+.workspace-topline {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 34px;
+  margin-bottom: 22px;
+  color: var(--workspace-muted);
+  font-size: .78rem;
+}
+
+.workspace-account {
+  color: var(--workspace-muted);
+}
+
+.workspace-main > header {
+  display: none;
+}
+
+.workspace-main > main {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.workspace-main button {
+  border-color: var(--workspace-lime);
+  transition: color .18s ease, background-color .18s ease, border-color .18s ease, transform .18s ease;
+}
+
+.workspace-main button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+@media (max-width: 800px) {
+  .workspace-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-sidebar {
+    border-right: 0;
+    border-bottom: 1px solid var(--workspace-line);
+    padding: 15px;
+  }
+
+  .workspace-logo {
+    margin: 0 0 14px;
+  }
+
+  .workspace-nav-label {
+    display: none;
+  }
+
+  .workspace-nav {
+    display: flex;
+    gap: 7px;
+    overflow-x: auto;
+  }
+
+  .workspace-nav a {
+    white-space: nowrap;
+  }
+
+  .workspace-main {
+    width: min(100% - 24px, 1060px);
+    padding-top: 18px;
+  }
+}

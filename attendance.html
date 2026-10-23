@@ -1,0 +1,268 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Attendance History | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <link rel="stylesheet" href="./attendance.css" />
+  </head>
+  <body class="workspace-page">
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Time Tracking</div>
+        <nav class="workspace-nav">
+          <a href="./index.html" class="nav-item">Overview</a>
+          <a href="./checkin.html" class="nav-item">Check In/Out</a>
+          <a href="./jobs.html" class="nav-item">Find Jobs</a>
+          <a href="./job-history.html" class="nav-item">Job History</a>
+          <a href="./my-schedule.html" class="nav-item">My Schedule</a>
+          <a href="./my-profile.html" class="nav-item">My Profile</a>
+          <a href="./my-wallet.html" class="nav-item">My Wallet</a>
+          <a href="./login.html" class="nav-item" onclick="sessionStorage.clear()">Sign out</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline">
+          <span>Workspace / Attendance History</span>
+          <span class="workspace-account" id="current-user">Loading...</span>
+        </div>
+        <main class="attendance-container">
+          <div class="attendance-header">
+            <h1>Attendance History</h1>
+            <div class="filter-controls">
+              <input type="date" id="start-date" placeholder="Start Date" />
+              <input type="date" id="end-date" placeholder="End Date" />
+              <button class="filter-btn" onclick="applyFilters()">Filter</button>
+              <button class="reset-btn" onclick="resetFilters()">Reset</button>
+            </div>
+          </div>
+
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-label">Total Working Days</div>
+              <div class="stat-value" id="total-days">0</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Total Hours</div>
+              <div class="stat-value" id="total-hours">0h</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">Average Daily Hours</div>
+              <div class="stat-value" id="avg-hours">0h</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-label">This Month</div>
+              <div class="stat-value" id="month-hours">0h</div>
+            </div>
+          </div>
+
+          <div class="table-container">
+            <table class="attendance-table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Check In</th>
+                  <th>Check Out</th>
+                  <th>Duration</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="attendance-tbody">
+                <tr class="empty-row">
+                  <td colspan="5" class="empty-message">Loading attendance records...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <button class="pagination-btn" id="prev-btn" onclick="previousPage()" disabled>← Previous</button>
+            <span class="page-info" id="page-info">Page 1</span>
+            <button class="pagination-btn" id="next-btn" onclick="nextPage()">Next →</button>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <script>
+      const API_BASE = 'http://localhost:3000/api';
+      let currentEmployeeId = null;
+      let allRecords = [];
+      let filteredRecords = [];
+      let currentPage = 1;
+      const recordsPerPage = 10;
+
+      document.addEventListener('DOMContentLoaded', () => {
+        if (!checkAuth()) {
+          return;
+        }
+        loadAttendanceHistory();
+        loadStatistics();
+      });
+
+      function checkAuth() {
+        currentEmployeeId = sessionStorage.getItem('eventKakiEmployeeId');
+        const role = sessionStorage.getItem('eventKakiRole');
+
+        if (!currentEmployeeId || !role) {
+          window.location.replace('./login.html');
+          return false;
+        }
+        if (role === 'supervisor') {
+          window.location.replace('./admin-dashboard.html');
+          return false;
+        }
+
+        const accountLabel = role === 'supervisor' ? 'Supervisor' : 'Employee';
+        document.getElementById('current-user').textContent = `${accountLabel}: ${currentEmployeeId}`;
+        return true;
+      }
+
+      async function loadAttendanceHistory() {
+        try {
+          const response = await fetch(`${API_BASE}/attendance/${currentEmployeeId}`, {
+            headers: { 'X-Auth-Token': sessionStorage.getItem('eventKakiAuthToken') || '' }
+          });
+          const data = await response.json();
+
+          if (response.ok) {
+            allRecords = data.records || [];
+            filteredRecords = allRecords;
+            displayRecords();
+          }
+        } catch (error) {
+          console.error('Error loading attendance:', error);
+          document.getElementById('attendance-tbody').innerHTML = 
+            '<tr class="empty-row"><td colspan="5" class="empty-message">Error loading records</td></tr>';
+        }
+      }
+
+      async function loadStatistics() {
+        try {
+          const response = await fetch(`${API_BASE}/stats/employee/${currentEmployeeId}?period=month`, {
+            headers: { 'X-Auth-Token': sessionStorage.getItem('eventKakiAuthToken') || '' }
+          });
+          const data = await response.json();
+
+          if (response.ok) {
+            const stats = data.statistics;
+            document.getElementById('total-days').textContent = stats.totalDays || 0;
+            document.getElementById('total-hours').textContent = `${stats.totalHours}h`;
+            document.getElementById('avg-hours').textContent = `${stats.avgHours}h`;
+            
+            // Calculate this month
+            const monthStats = calculateMonthStats(allRecords);
+            document.getElementById('month-hours').textContent = `${monthStats}h`;
+          }
+        } catch (error) {
+          console.error('Error loading statistics:', error);
+        }
+      }
+
+      function calculateMonthStats(records) {
+        const today = new Date();
+        const currentMonth = today.getMonth();
+        const currentYear = today.getFullYear();
+
+        const monthRecords = records.filter(r => {
+          const recordDate = new Date(r.date);
+          return recordDate.getMonth() === currentMonth && recordDate.getFullYear() === currentYear;
+        });
+
+        const totalHours = monthRecords.reduce((sum, r) => sum + (r.hours_worked || 0), 0);
+        return totalHours.toFixed(1);
+      }
+
+      function displayRecords() {
+        const tbody = document.getElementById('attendance-tbody');
+        const start = (currentPage - 1) * recordsPerPage;
+        const end = start + recordsPerPage;
+        const pageRecords = filteredRecords.slice(start, end);
+
+        if (pageRecords.length === 0) {
+          tbody.innerHTML = '<tr class="empty-row"><td colspan="5" class="empty-message">No attendance records found</td></tr>';
+          updatePagination();
+          return;
+        }
+
+        tbody.innerHTML = pageRecords.map(record => {
+          const checkInTime = record.check_in_time ? new Date(record.check_in_time).toLocaleTimeString() : '--:--';
+          const checkOutTime = record.check_out_time ? new Date(record.check_out_time).toLocaleTimeString() : '--:--';
+          const duration = record.hours_worked ? `${Math.floor(record.hours_worked)}h ${Math.round((record.hours_worked % 1) * 60)}m` : 'Pending';
+          const status = record.attendance_status === 'late_and_early_leave'
+            ? 'Late + Early Leave'
+            : record.attendance_status === 'late'
+              ? 'Late'
+              : record.attendance_status === 'early_leave'
+                ? 'Early Leave'
+                : record.check_out_time ? 'Checked Out' : record.check_in_time ? 'In Progress' : 'Not Checked In';
+          const statusClass = record.attendance_status === 'late' || record.attendance_status === 'early_leave' || record.attendance_status === 'late_and_early_leave'
+            ? 'warning'
+            : record.check_out_time ? 'completed' : record.check_in_time ? 'in-progress' : 'pending';
+
+          return `
+            <tr>
+              <td>${new Date(record.date).toLocaleDateString()}</td>
+              <td>${checkInTime}</td>
+              <td>${checkOutTime}</td>
+              <td>${duration}</td>
+              <td><span class="status-badge ${statusClass}">${status}</span></td>
+            </tr>
+          `;
+        }).join('');
+
+        updatePagination();
+      }
+
+      function updatePagination() {
+        const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+        document.getElementById('page-info').textContent = `Page ${currentPage} of ${totalPages || 1}`;
+        document.getElementById('prev-btn').disabled = currentPage === 1;
+        document.getElementById('next-btn').disabled = currentPage >= totalPages;
+      }
+
+      function previousPage() {
+        if (currentPage > 1) {
+          currentPage--;
+          displayRecords();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+
+      function nextPage() {
+        const totalPages = Math.ceil(filteredRecords.length / recordsPerPage);
+        if (currentPage < totalPages) {
+          currentPage++;
+          displayRecords();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+      }
+
+      function applyFilters() {
+        const startDate = document.getElementById('start-date').value;
+        const endDate = document.getElementById('end-date').value;
+
+        filteredRecords = allRecords.filter(record => {
+          const recordDate = new Date(record.date);
+          const isAfterStart = !startDate || recordDate >= new Date(startDate);
+          const isBeforeEnd = !endDate || recordDate <= new Date(endDate);
+          return isAfterStart && isBeforeEnd;
+        });
+
+        currentPage = 1;
+        displayRecords();
+      }
+
+      function resetFilters() {
+        document.getElementById('start-date').value = '';
+        document.getElementById('end-date').value = '';
+        filteredRecords = allRecords;
+        currentPage = 1;
+        displayRecords();
+      }
+    </script>
+  </body>
+</html>

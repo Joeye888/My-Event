@@ -1,0 +1,631 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Jobs | Event Kaki</title>
+    <link rel="stylesheet" href="./workspace.css" />
+    <style>
+      :root {
+        --black: #090909;
+        --panel: #151515;
+        --yellow: #facc15;
+        --muted-yellow: #eab308;
+        --text: #f8fafc;
+        --muted: #cbd5e1;
+      }
+
+      .apply-button {
+        border: 1px solid var(--yellow);
+        border-radius: 6px;
+        padding: 7px 10px;
+        color: var(--black);
+        background: var(--yellow);
+        cursor: pointer;
+        font: inherit;
+        font-size: 0.78rem;
+        font-weight: bold;
+      }
+
+      .apply-button.applied {
+        color: var(--yellow);
+        background: transparent;
+        cursor: default;
+      }
+
+      .client-notice {
+        margin: 0 0 8px;
+        border-left: 3px solid var(--yellow);
+        padding: 10px 12px;
+        color: var(--muted) !important;
+        background: rgb(250 204 21 / 8%);
+        font-size: 0.9rem;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: Arial, Helvetica, sans-serif;
+        background: var(--black);
+        color: var(--text);
+        margin: 0;
+        min-height: 100vh;
+      }
+
+      header {
+        min-height: 470px;
+        position: relative;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        padding: 64px max(20px, calc((100% - 900px) / 2));
+        background:
+          linear-gradient(90deg, rgb(9 9 9 / 91%) 0%, rgb(9 9 9 / 70%) 42%, rgb(9 9 9 / 48%) 100%),
+          linear-gradient(0deg, rgb(9 9 9 / 62%), transparent 45%),
+          url("./assets/klcc-city.jpg") center / cover no-repeat;
+        border-bottom: 4px solid var(--yellow);
+      }
+
+      header::after {
+        content: "";
+        position: absolute;
+        inset: auto 0 0;
+        height: 35%;
+        opacity: 0.8;
+        background:
+          linear-gradient(135deg, transparent 49.5%, var(--yellow) 50%, transparent 50.5%) 0 0 / 54px 54px,
+          linear-gradient(45deg, transparent 49.5%, rgb(250 204 21 / 22%) 50%, transparent 50.5%) 0 0 / 54px 54px;
+        mask-image: linear-gradient(to top, black, transparent);
+      }
+
+      .hero-content {
+        position: relative;
+        z-index: 2;
+        max-width: 560px;
+      }
+
+      .eyebrow {
+        color: var(--yellow);
+        font-size: 0.8rem;
+        font-weight: bold;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+
+      header h1 {
+        font-size: clamp(2.5rem, 7vw, 5rem);
+        line-height: 0.95;
+        margin: 14px 0;
+        letter-spacing: -0.05em;
+      }
+
+      header p {
+        color: var(--muted);
+        font-size: 1.1rem;
+        margin: 0;
+      }
+
+      .top-nav {
+        position: absolute;
+        top: 24px;
+        right: max(20px, calc((100% - 900px) / 2));
+        z-index: 3;
+        display: flex;
+        gap: 10px;
+      }
+
+      .schedule-link {
+        color: var(--yellow);
+        border-color: var(--yellow);
+      }
+
+      .nav-link {
+        color: var(--text);
+        border: 1px solid rgb(250 204 21 / 60%);
+        border-radius: 999px;
+        padding: 10px 16px;
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      .nav-link.primary {
+        background: var(--yellow);
+        color: var(--black);
+        font-weight: bold;
+      }
+
+      .skyline {
+        position: absolute;
+        right: 7%;
+        bottom: 0;
+        width: 300px;
+        height: 300px;
+        opacity: 0;
+        z-index: 1;
+      }
+
+      .tower {
+        position: absolute;
+        bottom: 0;
+        width: 76px;
+        height: 245px;
+        border: 2px solid var(--yellow);
+        background: repeating-linear-gradient(90deg, transparent 0 12px, rgb(250 204 21 / 35%) 13px 15px);
+        transform: skew(-7deg);
+        box-shadow: 0 0 28px rgb(250 204 21 / 18%);
+      }
+
+      .tower::before {
+        content: "";
+        position: absolute;
+        top: -45px;
+        left: 25px;
+        width: 20px;
+        height: 46px;
+        border-left: 2px solid var(--yellow);
+        border-right: 2px solid var(--yellow);
+      }
+
+      .tower::after {
+        content: "";
+        position: absolute;
+        top: 65px;
+        left: -17px;
+        width: 106px;
+        height: 20px;
+        border-top: 2px solid var(--yellow);
+        border-bottom: 2px solid var(--yellow);
+      }
+
+      .tower-left {
+        left: 55px;
+        height: 220px;
+      }
+
+      .tower-right {
+        left: 165px;
+        height: 270px;
+      }
+
+      .skyline .base {
+        position: absolute;
+        bottom: 0;
+        left: 20px;
+        width: 250px;
+        height: 28px;
+        border-top: 3px solid var(--yellow);
+        background: repeating-linear-gradient(90deg, var(--yellow) 0 4px, transparent 4px 20px);
+      }
+
+      main {
+        max-width: 900px;
+        margin: 24px auto;
+        padding: 0 20px;
+      }
+
+      .home-toolbar {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 22px;
+      }
+
+      .home-toolbar h2 {
+        margin: 0 0 6px;
+      }
+
+      .home-toolbar p {
+        margin: 0;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .search-box {
+        min-width: 240px;
+        border: 1px solid #475569;
+        border-radius: 8px;
+        padding: 12px 14px;
+        outline: none;
+        color: var(--text);
+        background: #151515;
+        font: inherit;
+      }
+
+      .search-box:focus {
+        border-color: var(--yellow);
+      }
+
+      .quick-links {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 12px;
+        margin-bottom: 28px;
+      }
+
+      .quick-link {
+        border: 1px solid #3f3f46;
+        border-radius: 10px;
+        padding: 15px;
+        color: var(--text);
+        background: #151515;
+        text-decoration: none;
+      }
+
+      .quick-link strong {
+        display: block;
+        margin-bottom: 5px;
+        color: var(--yellow);
+      }
+
+      .quick-link span {
+        color: var(--muted);
+        font-size: 0.8rem;
+      }
+
+      .no-results {
+        display: none;
+        border: 1px dashed #475569;
+        border-radius: 10px;
+        padding: 24px;
+        color: var(--muted);
+        text-align: center;
+      }
+
+      main > h2 {
+        color: var(--yellow);
+        margin-bottom: 18px;
+      }
+
+      .job-list {
+        display: grid;
+        gap: 16px;
+      }
+
+      .job-card {
+        background: linear-gradient(135deg, var(--panel), #202020);
+        border: 1px solid rgb(250 204 21 / 35%);
+        border-radius: 12px;
+        padding: 20px;
+        box-shadow: 0 8px 24px rgb(0 0 0 / 30%);
+      }
+
+      .job-card h2 {
+        margin-top: 0;
+        color: var(--text);
+      }
+
+      .job-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin: 12px 0 20px;
+      }
+
+      .job-badge {
+        border: 1px solid rgb(250 204 21 / 55%);
+        border-radius: 999px;
+        padding: 6px 10px;
+        color: var(--yellow) !important;
+        font-size: 0.78rem;
+        font-weight: bold;
+      }
+
+      .job-card p {
+        margin: 8px 0;
+        color: var(--muted);
+      }
+
+      .job-section {
+        margin-top: 18px;
+        border-top: 1px solid #3f3f46;
+        padding-top: 14px;
+      }
+
+      .job-section h3 {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 10px;
+        margin: 0 0 10px;
+        color: var(--yellow);
+        font-size: 0.95rem;
+        letter-spacing: 0.08em;
+      }
+
+      .section-requirement {
+        border: 1px solid #f87171;
+        border-radius: 999px;
+        padding: 3px 8px;
+        color: #fca5a5;
+        font-size: 0.7rem;
+        letter-spacing: 0;
+      }
+
+      .shift-list {
+        display: grid;
+        gap: 8px;
+      }
+
+      .shift {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding: 10px 12px;
+        border-radius: 7px;
+        background: #0f0f0f;
+        color: var(--muted);
+      }
+
+      .shift strong {
+        color: var(--text);
+      }
+
+      .shift-note {
+        color: var(--yellow);
+        font-size: 0.78rem;
+        font-weight: bold;
+      }
+
+      .rate {
+        color: var(--yellow) !important;
+        font-weight: bold;
+        font-size: 1.1rem;
+      }
+
+      @media (max-width: 700px) {
+        header {
+          min-height: 440px;
+        }
+
+        .skyline {
+          right: -45px;
+          opacity: 0;
+          transform: scale(0.85);
+          transform-origin: bottom right;
+        }
+
+        .home-toolbar {
+          align-items: stretch;
+          flex-direction: column;
+        }
+
+        .search-box {
+          min-width: 0;
+          width: 100%;
+        }
+
+        .quick-links {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body class="workspace-page">
+    <script>
+      if (sessionStorage.getItem("eventKakiDemoLoggedIn") !== "true") {
+        window.location.replace("./login.html");
+      }
+    </script>
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Crew workspace</div>
+        <nav class="workspace-nav" aria-label="Crew navigation">
+          <a href="./index.html">Overview</a>
+          <a href="./checkin.html">Check In/Out</a>
+          <a class="active" href="./jobs.html">Find Jobs</a>
+          <a href="./job-history.html">Job History</a>
+          <a href="./my-schedule.html">My Schedule</a>
+          <a href="./my-profile.html">My Profile</a>
+          <a href="./my-wallet.html">My Wallet</a>
+          <a href="./login.html" onclick="sessionStorage.removeItem('eventKakiDemoLoggedIn')">Sign out</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline"><span>Workspace / Find Jobs</span><span class="workspace-account" id="current-account">Loading...</span></div>
+    <header>
+      <nav class="top-nav" aria-label="Main navigation">
+        <a class="nav-link" href="./index.html">Home</a>
+        <a class="nav-link schedule-link" href="./my-schedule.html">My Schedule</a>
+        <a class="nav-link" href="./login.html">Log in</a>
+        <a class="nav-link primary" href="./register.html">Join Event Kaki</a>
+      </nav>
+      <div class="hero-content">
+        <div class="eyebrow">Kuala Lumpur event crew platform</div>
+        <h1>Event<br />Kaki</h1>
+        <p>Find your next event crew job in the heart of KL.</p>
+      </div>
+      <div class="skyline" aria-label="Stylised Kuala Lumpur Convention Centre skyline">
+        <div class="tower tower-left"></div>
+        <div class="tower tower-right"></div>
+        <div class="base"></div>
+      </div>
+    </header>
+    <main>
+      <div class="home-toolbar">
+        <div>
+          <h2>Available jobs</h2>
+          <p>Browse open shifts and apply for the time that suits you.</p>
+        </div>
+        <input class="search-box" id="job-search" type="search" placeholder="Search jobs or location" />
+      </div>
+      <p class="no-results" id="booking-restriction-notice" hidden></p>
+      <div id="job-list" class="job-list"></div>
+      <p class="no-results" id="no-results">No jobs match your search.</p>
+    </main>
+      </div>
+    </div>
+    <script src="./jobs.js"></script>
+    <script>
+      const employeeId = sessionStorage.getItem("eventKakiEmployeeId");
+      const role = sessionStorage.getItem("eventKakiRole");
+      const jobList = document.getElementById("job-list");
+      const search = document.getElementById("job-search");
+      const noResults = document.getElementById("no-results");
+      let currentJobs = [];
+      let currentApplications = [];
+
+      if (!employeeId || !role) {
+        window.location.replace("./login.html");
+      } else if (role === "supervisor") {
+        window.location.replace("./admin-dashboard.html");
+      } else {
+        document.getElementById("current-account").textContent = `${employeeId} · EPF deducted`;
+      }
+
+      const apiHeaders = {
+        "Content-Type": "application/json",
+        "X-Auth-Token": sessionStorage.getItem("eventKakiAuthToken") || ""
+      };
+
+      function normalizeStatus(status) {
+        if (!status) return "Available";
+        const value = String(status).trim();
+        if (value === "Applied") return "Pending";
+        if (value === "Job cancelled") return "Cancelled";
+        return value;
+      }
+
+      function renderJobsJobs(jobs, applications) {
+        jobList.innerHTML = "";
+        const searchQuery = search.value.trim().toLowerCase();
+
+        const filteredJobs = jobs.filter(job => {
+          const haystack = `${job.title || ""} ${job.location || ""} ${job.jobType || ""} ${job.requirements?.join(" ") || ""}`.toLowerCase();
+          return !searchQuery || haystack.includes(searchQuery);
+        });
+
+        noResults.style.display = filteredJobs.length ? "none" : "block";
+        filteredJobs.forEach(job => {
+          const myApplication = applications.find(app => app.job_id === String(job.id) && app.employee_id === employeeId);
+          const currentStatus = myApplication ? normalizeStatus(myApplication.status) : "Available";
+          const available = Number(job.paxAvailable ?? job.pax ?? 0);
+          const eventStatus = String(job.displayStatus || job.status || "Open");
+          const full = eventStatus.toLowerCase() === "job full" || available <= 0;
+          const inactive = ["Completed", "Ongoing", "Cancelled", "Expired"].includes(eventStatus);
+          const jobStatus = full ? "Job Full" : inactive ? eventStatus : currentStatus;
+
+          const sections = (job.sections || []).map(section => {
+            const shifts = (section.shifts || []).map(shift => {
+              const application = applications.find(app =>
+                app.job_id === String(job.id)
+                && app.section === section.title
+                && app.shift_time === shift.time
+                && app.employee_id === employeeId
+              );
+              const applied = application && ["Pending", "Approved", "Applied"].includes(normalizeStatus(application.status));
+              const disabled = full || inactive || applied;
+              const label = applied ? (normalizeStatus(application.status) === "Approved" ? "Approved" : "Pending") : full ? "Job Full" : inactive ? eventStatus : "Apply";
+              return `
+                <div class="shift">
+                  <strong>⏱️ ${shift.time}</strong>
+                  <span>
+                    <span class="available-pax">${Math.max(0, Number(shift.pax) || 0)} PAX available</span>
+                    ${shift.note ? ` · <span class="shift-note">${shift.note}</span>` : ""}
+                    <button
+                      class="apply-button${applied ? " applied" : ""}"
+                      data-section="${section.title}"
+                      data-time="${shift.time}"
+                      data-job-id="${job.id}"
+                      type="button"
+                      ${disabled ? "disabled" : ""}
+                    >${label}</button>
+                  </span>
+                </div>
+              `;
+            }).join("");
+
+            return `
+              <section class="job-section">
+                <h3>
+                  ${section.title}
+                  ${section.requirement ? `<span class="section-requirement">${section.requirement}</span>` : ""}
+                </h3>
+                <div class="shift-list">${shifts}</div>
+              </section>
+            `;
+          }).join("");
+
+          const card = document.createElement("article");
+          card.className = "job-card";
+          card.dataset.search = `${job.title || ""} ${job.location || ""} ${job.requirements?.join(" ") || ""}`.toLowerCase();
+          card.innerHTML = `
+            <h2>${job.title}</h2>
+            <div class="job-meta">
+              <span class="job-badge">${job.date || "Date TBD"}</span>
+              <span class="job-badge">${job.location || "Location TBD"}</span>
+              ${job.jobType ? `<span class="job-badge">${job.jobType}</span>` : ""}
+              ${job.wage != null ? `<span class="job-badge">RM ${Number(job.wage).toFixed(2)}</span>` : ""}
+            </div>
+            <p><strong>Time:</strong> ${job.callTime || "TBD"} ${job.endTime ? `- ${job.endTime}` : ""}</p>
+            <p><strong>Dress code:</strong> ${job.dressCode || "Not specified"}</p>
+            <p><strong>Food provided:</strong> ${job.foodProvided ? "Yes" : "No"}</p>
+            <p><strong>Pax available:</strong> ${available} / ${job.pax || 0}</p>
+            <p><strong>Status:</strong> ${jobStatus}</p>
+            ${job.clientNotice ? `<p class="client-notice"><strong>Client notice:</strong> ${job.clientNotice}</p>` : ""}
+            ${sections}
+          `;
+          jobList.appendChild(card);
+        });
+      }
+
+      async function loadJobs() {
+        try {
+          const [jobsRes, appsRes] = await Promise.all([
+            fetch('/api/jobs', { headers: apiHeaders }),
+            fetch('/api/job-applications', { headers: apiHeaders })
+          ]);
+
+          const [jobsData, appData] = await Promise.all([jobsRes.json(), appsRes.json()]);
+          if (!jobsRes.ok) throw new Error(jobsData.message || "Unable to load jobs");
+          if (!appsRes.ok) throw new Error(appData.message || "Unable to load applications");
+          currentJobs = jobsData.jobs || [];
+          currentApplications = appData.applications || [];
+          const restriction = jobsData.bookingRestriction;
+          const restrictionNotice = document.getElementById("booking-restriction-notice");
+          if (restriction) {
+            restrictionNotice.hidden = false;
+            restrictionNotice.textContent = `Job booking is temporarily frozen until ${restriction.blockedUntil}. You can still use the rest of Event Kaki.`;
+          } else {
+            restrictionNotice.hidden = true;
+          }
+          renderJobsJobs(currentJobs, currentApplications);
+        } catch (error) {
+          jobList.innerHTML = `<p class="empty-history">${error.message || 'Unable to load jobs'}</p>`;
+        }
+      }
+
+      search.addEventListener("input", () => {
+        renderJobsJobs(currentJobs, currentApplications);
+      });
+
+      document.addEventListener("click", async (event) => {
+        const button = event.target.closest(".apply-button:not(:disabled)");
+        if (!button || role !== "crew") return;
+        const jobId = button.dataset.jobId;
+        const section = button.dataset.section;
+        const time = button.dataset.time;
+
+        try {
+          const response = await fetch(`/api/jobs/${jobId}/apply`, {
+            method: "POST",
+            headers: apiHeaders,
+            body: JSON.stringify({ section, time })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Unable to apply");
+          await loadJobs();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+
+      loadJobs();
+      window.setInterval(loadJobs, 30000);
+    </script>
+  </body>
+</html>

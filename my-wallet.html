@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My Wallet | Event Kaki</title>
+    <link rel="stylesheet" href="./auth.css" />
+    <link rel="stylesheet" href="./workspace.css" />
+    <style>
+      .wallet { max-width: 1080px; padding: 36px 40px 60px; }
+      .wallet-header { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
+      .wallet-header h1 { margin: 0; color: var(--yellow); }
+      .wallet-header p { margin: 8px 0 0; color: var(--muted); }
+      .wallet-date { color: var(--muted); font-size: .82rem; }
+      .wallet-grid { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(250px, .7fr); gap: 18px; margin-top: 26px; }
+      .balance-card, .summary-card, .wallet-section { border: 1px solid #334155; border-radius: 16px; background: linear-gradient(135deg, #172033, #101722); }
+      .balance-card { position: relative; overflow: hidden; min-height: 220px; padding: 28px; }
+      .balance-card::after { content: ""; position: absolute; width: 220px; height: 220px; right: -70px; top: -70px; border: 1px solid rgb(250 204 21 / 28%); border-radius: 50%; box-shadow: 0 0 0 18px rgb(250 204 21 / 4%), 0 0 0 38px rgb(250 204 21 / 3%); }
+      .eyebrow { color: var(--yellow); font-size: .72rem; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+      .balance-amount { position: relative; z-index: 1; margin: 12px 0 7px; color: #f8fafc; font-size: clamp(2.2rem, 6vw, 3.8rem); letter-spacing: -.05em; }
+      .balance-caption { color: var(--muted); font-size: .86rem; }
+      .balance-footer { position: absolute; z-index: 1; right: 28px; bottom: 24px; left: 28px; display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: .78rem; }
+      .withdraw-button { border: 1px solid var(--yellow); border-radius: 8px; padding: 10px 14px; color: var(--black); background: var(--yellow); font: inherit; font-weight: 700; cursor: pointer; }
+      .summary-stack { display: grid; gap: 18px; }
+      .summary-card { padding: 22px; }
+      .summary-card span { color: var(--muted); font-size: .8rem; }
+      .summary-card strong { display: block; margin-top: 8px; color: #f8fafc; font-size: 1.65rem; }
+      .summary-card.pending strong { color: #fbbf24; }
+      .wallet-section { margin-top: 20px; padding: 24px; }
+      .section-heading { display: flex; align-items: center; justify-content: space-between; gap: 14px; margin-bottom: 18px; }
+      .section-heading h2 { margin: 0; color: #f8fafc; font-size: 1.05rem; }
+      .section-heading span { color: var(--muted); font-size: .78rem; }
+      .transaction-list { display: grid; gap: 2px; }
+      .transaction { display: flex; align-items: center; justify-content: space-between; gap: 14px; padding: 15px 0; border-bottom: 1px solid #263244; }
+      .transaction:last-child { border-bottom: 0; }
+      .transaction-title { color: #f8fafc; font-weight: 700; }
+      .transaction-meta { margin-top: 4px; color: var(--muted); font-size: .78rem; }
+      .transaction-amount { color: #86efac; font-weight: 800; white-space: nowrap; }
+      .transaction-amount.debit { color: #fca5a5; }
+      .empty-wallet { padding: 22px 0 8px; color: var(--muted); text-align: center; }
+      .wallet-notice { margin-bottom: 18px; border: 1px solid rgb(250 204 21 / 35%); border-radius: 10px; padding: 14px; color: var(--muted); background: rgb(250 204 21 / 7%); line-height: 1.5; }
+      .wallet-notice strong { display: block; margin-bottom: 5px; color: var(--yellow); }
+      .wallet-form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+      .wallet-form label { display: grid; gap: 7px; color: var(--muted); font-weight: bold; }
+      .wallet-form input { border: 1px solid #475569; border-radius: 8px; padding: 12px; color: var(--text); background: #0f0f0f; font: inherit; }
+      .wallet-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 20px; }
+      .wallet-actions button, .wallet-actions a { border: 1px solid var(--yellow); border-radius: 8px; padding: 11px 15px; color: var(--yellow); background: transparent; font: inherit; text-decoration: none; cursor: pointer; }
+      .wallet-actions .primary { color: var(--black); background: var(--yellow); }
+      #statement-status { color: var(--muted); font-size: .82rem; }
+      @media (max-width: 760px) { .wallet { padding: 28px 20px 46px; } .wallet-grid { grid-template-columns: 1fr; } .wallet-header { align-items: flex-start; flex-direction: column; } }
+      @media (max-width: 560px) { .wallet-form { grid-template-columns: 1fr; } .balance-footer { align-items: flex-start; flex-direction: column; } }
+    </style>
+  </head>
+  <body class="workspace-page">
+    <script>
+      if (sessionStorage.getItem("eventKakiDemoLoggedIn") !== "true" || sessionStorage.getItem("eventKakiRole") !== "crew") window.location.replace("./login.html");
+    </script>
+    <div class="workspace-layout">
+      <aside class="workspace-sidebar">
+        <div class="workspace-logo">Event Kaki</div>
+        <div class="workspace-nav-label">Crew workspace</div>
+        <nav class="workspace-nav">
+          <a href="./index.html">Overview</a>
+          <a href="./checkin.html">Check In/Out</a>
+          <a href="./jobs.html">Find Jobs</a>
+          <a href="./job-history.html">Job History</a>
+          <a href="./my-schedule.html">My Schedule</a>
+          <a href="./my-profile.html">My Profile</a>
+          <a class="active" href="./my-wallet.html">My Wallet</a>
+          <a href="./login.html" onclick="sessionStorage.clear()">Sign out</a>
+        </nav>
+      </aside>
+      <div class="workspace-main">
+        <div class="workspace-topline"><span>Workspace / My Wallet</span><span class="workspace-account" id="current-account"></span></div>
+        <main class="wallet">
+          <header class="wallet-header">
+            <div><h1>Earnings Wallet</h1><p>Track your event earnings and payment status.</p></div>
+            <span class="wallet-date" id="wallet-date"></span>
+          </header>
+          <div class="wallet-grid">
+            <section class="balance-card">
+              <div class="eyebrow">Available balance</div>
+              <div class="balance-amount" id="available-balance">RM 0.00</div>
+              <div class="balance-caption">Ready to withdraw after your payment is released.</div>
+              <div class="balance-footer"><span id="release-note">No released earnings yet</span><button class="withdraw-button" id="withdraw-button" type="button">Request withdrawal</button></div>
+            </section>
+            <div class="summary-stack">
+              <section class="summary-card pending"><span>Pending earnings</span><strong id="pending-balance">RM 0.00</strong></section>
+              <section class="summary-card"><span>Total paid out</span><strong id="paid-balance">RM 0.00</strong></section>
+            </div>
+          </div>
+          <section class="wallet-section">
+            <div class="section-heading"><h2>Transaction history</h2><span>Latest wallet activity</span></div>
+            <div class="transaction-list" id="transaction-list"></div>
+          </section>
+          <section class="wallet-section">
+            <div class="section-heading"><h2>Payment account</h2><span>Secure payment details</span></div>
+            <div class="wallet-notice"><strong>Bank details are locked for security</strong>Payment is transferred to your registered bank account. Request an edit from your admin if your details need to change.</div>
+            <div class="wallet-form">
+              <label>Bank Name <input value="Maybank" disabled /></label>
+              <label>Account Number <input value="•••• 1234" disabled /></label>
+              <label>Account Holder Name <input value="Demo Kaki" disabled /></label>
+              <label>Bank Statement <input id="bank-statement" type="file" accept=".pdf,image/png,image/jpeg" /></label>
+            </div>
+            <p id="statement-status"></p>
+            <div class="wallet-actions"><button class="primary" id="save-wallet" type="button">Save bank statement</button><a href="./my-profile.html">Open My Profile</a></div>
+          </section>
+        </main>
+      </div>
+    </div>
+    <script>
+      const employeeId = sessionStorage.getItem("eventKakiEmployeeId");
+      document.getElementById("current-account").textContent = `${employeeId} · EPF deducted`;
+      document.getElementById("wallet-date").textContent = new Date().toLocaleDateString("en-MY", { day: "numeric", month: "short", year: "numeric" });
+      const money = (value) => `RM ${Number(value || 0).toFixed(2)}`;
+      const walletHeaders = { "X-Auth-Token": sessionStorage.getItem("eventKakiAuthToken") || "" };
+      let wallet = { available_balance: 0, pending_balance: 0, paid_balance: 0 };
+      let transactions = [];
+      fetch("/api/wallet", { headers: walletHeaders })
+        .then(async (response) => {
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Unable to load wallet");
+          wallet = data.wallet;
+          transactions = data.transactions || [];
+          document.getElementById("available-balance").textContent = money(wallet.available_balance);
+          document.getElementById("pending-balance").textContent = money(wallet.pending_balance);
+          document.getElementById("paid-balance").textContent = money(wallet.paid_balance);
+          document.getElementById("release-note").textContent = wallet.available_balance > 0 ? "Funds available for withdrawal" : "No released earnings yet";
+          const transactionList = document.getElementById("transaction-list");
+          transactionList.innerHTML = transactions.length ? transactions.map((transaction) => `
+        <div class="transaction">
+          <div><div class="transaction-title">${transaction.title}</div><div class="transaction-meta">${transaction.created_at || "Recent"} · ${transaction.status}</div></div>
+          <strong class="transaction-amount${transaction.type === "debit" ? " debit" : ""}">${transaction.type === "debit" ? "-" : "+"}${money(transaction.amount)}</strong>
+        </div>
+          `).join("") : '<div class="empty-wallet">Your wallet transactions will appear here after you complete a paid shift.</div>';
+        })
+        .catch(error => {
+          document.getElementById("transaction-list").innerHTML = `<div class="empty-wallet">${error.message}</div>`;
+        });
+      document.getElementById("withdraw-button").addEventListener("click", async () => {
+        if (!wallet.available_balance || wallet.available_balance <= 0) {
+          alert("There is no available balance to withdraw yet.");
+          return;
+        }
+
+        const amount = Number(wallet.available_balance);
+        try {
+          const response = await fetch("/api/wallet/request-withdrawal", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-Auth-Token": sessionStorage.getItem("eventKakiAuthToken") || ""
+            },
+            body: JSON.stringify({ amount })
+          });
+          const data = await response.json();
+          if (!response.ok) throw new Error(data.message || "Unable to request withdrawal");
+          alert(`Withdrawal request submitted for RM ${amount.toFixed(2)}. It is now pending review.`);
+          window.location.reload();
+        } catch (error) {
+          alert(error.message);
+        }
+      });
+      const statementInput = document.getElementById("bank-statement");
+      const statementStatus = document.getElementById("statement-status");
+      const statementKey = `eventKakiBankStatement-${employeeId}`;
+      const storedStatement = JSON.parse(localStorage.getItem(statementKey) || "null");
+      if (storedStatement) statementStatus.textContent = `Uploaded: ${storedStatement.name}`;
+      document.getElementById("save-wallet").addEventListener("click", () => {
+        const file = statementInput.files[0];
+        if (!file) {
+          statementStatus.textContent = storedStatement ? `Uploaded: ${storedStatement.name}` : "Please select a bank statement first.";
+          return;
+        }
+        const reader = new FileReader();
+        reader.onload = () => {
+          localStorage.setItem(statementKey, JSON.stringify({ name: file.name, type: file.type, data: reader.result }));
+          statementStatus.textContent = `Uploaded: ${file.name}`;
+        };
+        reader.readAsDataURL(file);
+      });
+    </script>
+  </body>
+</html>

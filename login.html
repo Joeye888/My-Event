@@ -96,9 +96,7 @@
         const password = loginForm.password.value;
 
         try {
-          const apiBase = window.location.protocol === "file:"
-            ? "http://localhost:3000/api"
-            : `${window.location.origin}/api`;
+         const apiBase = "https://你的-event-kaki-backend.onrender.com/api";
           const response = await fetch(`${apiBase}/auth/login`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
